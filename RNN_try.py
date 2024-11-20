@@ -4,10 +4,10 @@ from sklearn.model_selection import train_test_split
 import os
 
 path = r"C:\Users\conof\Desktop\RNN_QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\circuit_noisy.stim"
-circuit_google = stim.Circuit.from_file(path)
+#circuit_google = stim.Circuit.from_file(path)
 
 path2 = r"C:\Users\conof\Desktop\RNN_QEC\surface-sim\scripts\biased_noise_datagen\test\surf-code_d3_bZ_s000000000_n20000_r1\circuit.stim"
-circuit_Delft = stim.Circuit.from_file(path2)
+#circuit_Delft = stim.Circuit.from_file(path2)
 
 distance=3
 rounds=5
