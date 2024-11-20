@@ -70,7 +70,7 @@ X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchviz import make_dot
+#from torchviz import make_dot
 
 # RNN model
 class BinaryRNN(nn.Module):
