@@ -1,0 +1,156 @@
+<svg viewBox="0 0 320 352" xmlns="http://www.w3.org/2000/svg">
+<path d="M160.0,32.0 a1,1 0 0,0 -32.0,32.0" fill="black" stroke="none" />
+<path d="M128.0,64.0 160.0,32.0 192.0,64.0 160.0,96.0 128.0,64.0" fill="red" stroke="none" />
+<path d="M96.0,96.0 128.0,64.0 160.0,96.0 128.0,128.0 96.0,96.0" fill="black" stroke="none" />
+<path d="M96.0,96.0 a1,1 0 0,0 32.0,32.0" fill="red" stroke="none" />
+<path d="M224.0,96.0 a1,1 0 0,0 -32.0,-32.0" fill="red" stroke="none" />
+<path d="M160.0,96.0 192.0,64.0 224.0,96.0 192.0,128.0 160.0,96.0" fill="black" stroke="none" />
+<path d="M128.0,128.0 160.0,96.0 192.0,128.0 160.0,160.0 128.0,128.0" fill="red" stroke="none" />
+<path d="M160.0,160.0 a1,1 0 0,0 32.0,-32.0" fill="black" stroke="none" />
+<path d="M160.0,32.0 a1,1 0 0,0 -32.0,32.0" fill="none" stroke="black" />
+<circle cx="151.46666666666667" cy="36.266666666666666" r="4" stroke="yellow" fill="none" />
+<circle cx="151.46666666666667" cy="36.266666666666666" r="6" stroke="yellow" fill="none" />
+<path d="M151.46666666666667,36.266666666666666 132.26666666666665,55.46666666666667" fill="none" stroke="white" />
+<path d="M129.43823954192047,58.29509379141286 129.43823954192047,52.63823954192048 135.09509379141284,58.29509379141286 129.43823954192047,58.29509379141286" stroke="none" fill="white" />
+<path d="M128.0,64.0 160.0,32.0 192.0,64.0 160.0,96.0 128.0,64.0" fill="none" stroke="black" />
+<path d="M160.0,44.8 179.2,64.0 140.8,64.0 160.0,83.19999999999999" fill="none" stroke="white" />
+<path d="M162.82842712474618,86.02842712474617 157.17157287525382,86.02842712474617 162.82842712474618,80.3715728752538 162.82842712474618,86.02842712474617" stroke="none" fill="white" />
+<path d="M96.0,96.0 128.0,64.0 160.0,96.0 128.0,128.0 96.0,96.0" fill="none" stroke="black" />
+<path d="M128.0,76.80000000000001 108.8,96.0 147.2,96.0 128.0,115.2" fill="none" stroke="white" />
+<path d="M125.17157287525382,118.02842712474619 125.17157287525382,112.37157287525382 130.82842712474618,118.02842712474619 125.17157287525382,118.02842712474619" stroke="none" fill="white" />
+<path d="M96.0,96.0 a1,1 0 0,0 32.0,32.0" fill="none" stroke="black" />
+<path d="M100.26666666666667,104.53333333333333 119.46666666666667,123.73333333333333" fill="none" stroke="white" />
+<path d="M122.29509379141285,126.56176045807952 116.63823954192048,126.56176045807952 122.29509379141285,120.90490620858715 122.29509379141285,126.56176045807952" stroke="none" fill="white" />
+<path d="M224.0,96.0 a1,1 0 0,0 -32.0,-32.0" fill="none" stroke="black" />
+<circle cx="200.53333333333333" cy="68.26666666666667" r="4" stroke="yellow" fill="none" />
+<circle cx="200.53333333333333" cy="68.26666666666667" r="6" stroke="yellow" fill="none" />
+<path d="M200.53333333333333,68.26666666666667 219.73333333333335,87.46666666666667" fill="none" stroke="white" />
+<path d="M222.56176045807953,90.29509379141285 216.90490620858716,90.29509379141285 222.56176045807953,84.63823954192048 222.56176045807953,90.29509379141285" stroke="none" fill="white" />
+<path d="M160.0,96.0 192.0,64.0 224.0,96.0 192.0,128.0 160.0,96.0" fill="none" stroke="black" />
+<path d="M192.0,76.80000000000001 172.8,96.0 211.20000000000002,96.0 192.0,115.2" fill="none" stroke="white" />
+<path d="M189.17157287525382,118.02842712474619 189.17157287525382,112.37157287525382 194.82842712474618,118.02842712474619 189.17157287525382,118.02842712474619" stroke="none" fill="white" />
+<path d="M128.0,128.0 160.0,96.0 192.0,128.0 160.0,160.0 128.0,128.0" fill="none" stroke="black" />
+<path d="M160.0,108.8 179.2,128.0 140.8,128.0 160.0,147.2" fill="none" stroke="white" />
+<path d="M162.82842712474618,150.02842712474617 157.17157287525382,150.02842712474617 162.82842712474618,144.3715728752538 162.82842712474618,150.02842712474617" stroke="none" fill="white" />
+<path d="M160.0,160.0 a1,1 0 0,0 32.0,-32.0" fill="none" stroke="black" />
+<path d="M187.73333333333335,136.53333333333333 168.53333333333336,155.73333333333335" fill="none" stroke="white" />
+<path d="M165.70490620858718,158.56176045807953 165.70490620858718,152.90490620858716 171.36176045807954,158.56176045807953 165.70490620858718,158.56176045807953" stroke="none" fill="white" />
+<text stroke="black" x="64.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,2</text>
+<text fill="white" x="64.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,2</text>
+<text stroke="black" x="96.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,3</text>
+<text fill="white" x="96.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,3</text>
+<text stroke="black" x="224.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,7</text>
+<text fill="white" x="224.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,7</text>
+<text stroke="black" x="256.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,8</text>
+<text fill="white" x="256.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,8</text>
+<text stroke="black" x="160.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,5</text>
+<text fill="white" x="160.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,5</text>
+<text stroke="black" x="64.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,2</text>
+<text fill="white" x="64.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,2</text>
+<text stroke="black" x="288.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,9</text>
+<text fill="white" x="288.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,9</text>
+<text stroke="black" x="160.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,5</text>
+<text fill="white" x="160.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,5</text>
+<text stroke="black" x="96.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,3</text>
+<text fill="white" x="96.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,3</text>
+<text stroke="black" x="128.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,4</text>
+<text fill="white" x="128.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,4</text>
+<text stroke="black" x="224.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,7</text>
+<text fill="white" x="224.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,7</text>
+<text stroke="black" x="128.0" y="32.0" font-size="10" text-anchor="middle" alignment-baseline="central">1,4</text>
+<text fill="white" x="128.0" y="32.0" font-size="10" text-anchor="middle" alignment-baseline="central">1,4</text>
+<text stroke="black" x="192.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,6</text>
+<text fill="white" x="192.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,6</text>
+<text stroke="black" x="96.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,3</text>
+<text fill="white" x="96.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,3</text>
+<text stroke="black" x="128.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,4</text>
+<text fill="white" x="128.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,4</text>
+<text stroke="black" x="32.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,1</text>
+<text fill="white" x="32.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,1</text>
+<text stroke="black" x="160.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,5</text>
+<text fill="white" x="160.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,5</text>
+<text stroke="black" x="160.0" y="32.0" font-size="10" text-anchor="middle" alignment-baseline="central">1,5</text>
+<text fill="white" x="160.0" y="32.0" font-size="10" text-anchor="middle" alignment-baseline="central">1,5</text>
+<text stroke="black" x="224.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,7</text>
+<text fill="white" x="224.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,7</text>
+<text stroke="black" x="160.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,5</text>
+<text fill="white" x="160.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,5</text>
+<text stroke="black" x="192.0" y="64.0" font-size="10" text-anchor="middle" alignment-baseline="central">2,6</text>
+<text fill="white" x="192.0" y="64.0" font-size="10" text-anchor="middle" alignment-baseline="central">2,6</text>
+<text stroke="black" x="96.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,3</text>
+<text fill="white" x="96.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,3</text>
+<text stroke="black" x="192.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,6</text>
+<text fill="white" x="192.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,6</text>
+<text stroke="black" x="256.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,8</text>
+<text fill="white" x="256.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,8</text>
+<text stroke="black" x="224.0" y="64.0" font-size="10" text-anchor="middle" alignment-baseline="central">2,7</text>
+<text fill="white" x="224.0" y="64.0" font-size="10" text-anchor="middle" alignment-baseline="central">2,7</text>
+<text stroke="black" x="160.0" y="320.0" font-size="10" text-anchor="middle" alignment-baseline="central">10,5</text>
+<text fill="white" x="160.0" y="320.0" font-size="10" text-anchor="middle" alignment-baseline="central">10,5</text>
+<text stroke="black" x="128.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,4</text>
+<text fill="white" x="128.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,4</text>
+<text stroke="black" x="192.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,6</text>
+<text fill="white" x="192.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,6</text>
+<text stroke="black" x="96.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,3</text>
+<text fill="white" x="96.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,3</text>
+<text stroke="black" x="288.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,9</text>
+<text fill="white" x="288.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,9</text>
+<text stroke="black" x="224.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,7</text>
+<text fill="white" x="224.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,7</text>
+<text stroke="black" x="128.0" y="288.0" font-size="10" text-anchor="middle" alignment-baseline="central">9,4</text>
+<text fill="white" x="128.0" y="288.0" font-size="10" text-anchor="middle" alignment-baseline="central">9,4</text>
+<text stroke="black" x="128.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,4</text>
+<text fill="white" x="128.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,4</text>
+<text stroke="black" x="64.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,2</text>
+<text fill="white" x="64.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,2</text>
+<text stroke="black" x="160.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,5</text>
+<text fill="white" x="160.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,5</text>
+<text stroke="black" x="64.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,2</text>
+<text fill="white" x="64.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,2</text>
+<text stroke="black" x="192.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,6</text>
+<text fill="white" x="192.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,6</text>
+<text stroke="black" x="256.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,8</text>
+<text fill="white" x="256.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,8</text>
+<text stroke="black" x="160.0" y="288.0" font-size="10" text-anchor="middle" alignment-baseline="central">9,5</text>
+<text fill="white" x="160.0" y="288.0" font-size="10" text-anchor="middle" alignment-baseline="central">9,5</text>
+<text stroke="black" x="160.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,5</text>
+<text fill="white" x="160.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,5</text>
+<text stroke="black" x="192.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,6</text>
+<text fill="white" x="192.0" y="96.0" font-size="10" text-anchor="middle" alignment-baseline="central">3,6</text>
+<text stroke="black" x="224.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,7</text>
+<text fill="white" x="224.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,7</text>
+<text stroke="black" x="128.0" y="64.0" font-size="10" text-anchor="middle" alignment-baseline="central">2,4</text>
+<text fill="white" x="128.0" y="64.0" font-size="10" text-anchor="middle" alignment-baseline="central">2,4</text>
+<text stroke="black" x="96.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,3</text>
+<text fill="white" x="96.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,3</text>
+<text stroke="black" x="288.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,9</text>
+<text fill="white" x="288.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,9</text>
+<text stroke="black" x="192.0" y="288.0" font-size="10" text-anchor="middle" alignment-baseline="central">9,6</text>
+<text fill="white" x="192.0" y="288.0" font-size="10" text-anchor="middle" alignment-baseline="central">9,6</text>
+<text stroke="black" x="192.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,6</text>
+<text fill="white" x="192.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,6</text>
+<text stroke="black" x="64.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,2</text>
+<text fill="white" x="64.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,2</text>
+<text stroke="black" x="160.0" y="64.0" font-size="10" text-anchor="middle" alignment-baseline="central">2,5</text>
+<text fill="white" x="160.0" y="64.0" font-size="10" text-anchor="middle" alignment-baseline="central">2,5</text>
+<text stroke="black" x="224.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,7</text>
+<text fill="white" x="224.0" y="224.0" font-size="10" text-anchor="middle" alignment-baseline="central">7,7</text>
+<text stroke="black" x="128.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,4</text>
+<text fill="white" x="128.0" y="160.0" font-size="10" text-anchor="middle" alignment-baseline="central">5,4</text>
+<text stroke="black" x="128.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,4</text>
+<text fill="white" x="128.0" y="256.0" font-size="10" text-anchor="middle" alignment-baseline="central">8,4</text>
+<text stroke="black" x="32.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,1</text>
+<text fill="white" x="32.0" y="192.0" font-size="10" text-anchor="middle" alignment-baseline="central">6,1</text>
+<text stroke="black" x="256.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,8</text>
+<text fill="white" x="256.0" y="128.0" font-size="10" text-anchor="middle" alignment-baseline="central">4,8</text>
+<text stroke="white"  x="96.0" y="106.0" font-size="10" text-anchor="middle" alignment-baseline="central">X</text>
+<text fill="black"  x="96.0" y="106.0" font-size="10" text-anchor="middle" alignment-baseline="central">X</text>
+<text stroke="white"  x="128.0" y="138.0" font-size="10" text-anchor="middle" alignment-baseline="central">X</text>
+<text fill="black"  x="128.0" y="138.0" font-size="10" text-anchor="middle" alignment-baseline="central">X</text>
+<text stroke="white"  x="160.0" y="170.0" font-size="10" text-anchor="middle" alignment-baseline="central">X</text>
+<text fill="black"  x="160.0" y="170.0" font-size="10" text-anchor="middle" alignment-baseline="central">X</text>
+<rect fill="black" x="0" y="0" width="10" height="10" />
+<text x="5" y="5" fill="white" font-size="10" text-anchor="middle" alignment-baseline="central">X</text>
+<rect fill="red" x="0" y="12" width="10" height="10" />
+<text x="5" y="17" fill="white" font-size="10" text-anchor="middle" alignment-baseline="central">Z</text>
+</svg>

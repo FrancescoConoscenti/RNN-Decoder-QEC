@@ -1,0 +1,14 @@
+type: surface_code_memory_experiment
+basis: X
+rounds: 1
+distance: 3
+data_qubits: 9
+measure_qubits: 8
+shots: 50000
+center_data_qubit_row: 3
+center_data_qubit_col: 5
+circuit_measurements: 17
+circuit_sweep_bits: 9
+circuit_detectors: 8
+circuit_observables: 1
+circuit_qubits: 17
