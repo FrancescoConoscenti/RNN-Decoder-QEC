@@ -190,9 +190,9 @@ def test(model, binary_sequences, targets, batch_size):
 
 # Define parameters
 input_size = num_ancilla_qubits # Each input is a Detection round, vector of mmt of the Ancilla
-hidden_size = 64  # You can experiment with different sizes
+hidden_size = 128  # You can experiment with different sizes
 output_size = 1  # Output is the value of the observable after the mmt cycles
-batch_size=256
+batch_size = 256
 learning_rate=0.0001
 num_epochs=10
 
