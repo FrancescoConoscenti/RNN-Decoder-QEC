@@ -1,10 +1,8 @@
 import stim
 import numpy as np
 from sklearn.model_selection import train_test_split
+from typing import List
 
-
-path = r"RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\circuit_noisy.stim"
-circuit_google = stim.Circuit.from_file(path)
 
 distance=3
 rounds=5
@@ -19,13 +17,8 @@ if distance ==5:
     num_data_qubits=25
     num_ancilla_qubits=24
 
-#circuit_google.diagram('timeline-svg')
-
-# # Compile the sampler
-# sampler = circuit.compile_detector_sampler()
-# # Sample shots, with observables
-# samples = sampler.sample(1, separate_observables=True)
-# print(samples)
+path = r"RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\circuit_noisy.stim"
+circuit_google = stim.Circuit.from_file(path)
 
 surface_code_circuit = stim.Circuit.generated(
     "surface_code:rotated_memory_x",
@@ -36,8 +29,9 @@ surface_code_circuit = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-
-num_shots=2000
+####################################################################################################################
+#get synthetic data
+num_shots=2000000
 # Compile the sampler
 sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
@@ -57,7 +51,48 @@ test_size=0.2
 test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
+###################################################################################################################
+#experimental
+def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
+    shots = []
+    bytes_per_shot = (bits_per_shot + 7) // 8
+    for offset in range(0, len(data), bytes_per_shot):
+        shot = []
+        for k in range(bits_per_shot):
+            byte = data[offset + k // 8]
+            bit = (byte >> (k % 8)) % 2 == 1
+            shot.append(bit)
+        shots.append(shot)
+    return shots
 
+
+path1 = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\detection_events.b8"
+path2 = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\obs_flips_actual.01"
+round = 5
+bits_per_shot = round*8
+
+with open(path1, "rb") as file:
+    # Read the file content as bytes
+    data_detection = file.read()
+
+detection_exp = parse_b8(data_detection,bits_per_shot)
+detection_exp1 = np.array(detection_exp)
+detection_exp2 = detection_exp1.reshape(50000, rounds, num_ancilla_qubits)
+
+
+with open(path2, "rb") as file:
+    # Read the file content as bytes
+    data_obs = file.read()
+
+obs_exp = data_obs.replace(b"\n", b"")
+obs_exp_bit = [bit-48 for bit in obs_exp]
+obs_exp_bit_array = np.array(obs_exp_bit)
+
+
+X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
+
+##############################################################################################################################
+#train model
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -184,6 +219,55 @@ def train(model, binary_sequences, targets, num_epochs, learning_rate, batch_siz
             optimizer.step()
         
         print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}')
+    print("End of training")
+
+
+def finetune(model, binary_sequences, targets, num_epochs, learning_rate, batch_size,num_layers):
+    
+    criterion = nn.BCELoss()  # Binary Cross Entropy Loss
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    
+    # Calculate number of batches
+    num_batches = len(binary_sequences) // batch_size
+    
+    for epoch in range(num_epochs):
+        total_loss = 0
+        
+        for batch_idx in range(num_batches):
+            # Get batch data
+            batch_sequences = binary_sequences[batch_idx * batch_size : (batch_idx + 1) * batch_size]
+            batch_targets = targets[batch_idx * batch_size : (batch_idx + 1) * batch_size]
+            target_tensor = torch.tensor(batch_targets).float()
+            
+            optimizer.zero_grad()
+            
+            # Initialize hidden state for the batch with batch size
+            hidden = model.init_hidden(batch_size,num_layers)
+            
+            # Forward pass through each sequence in the batch
+            batch_loss = 0
+
+            input_tensor = binary_array_to_tensor(batch_sequences)  # Prepare input tensor for batch
+            p_main, p_aux = model(input_tensor)  # Forward pass
+            p_main, p_aux=p_main.squeeze(1), p_aux.squeeze(1)
+            
+            loss= H(target_tensor,p_main)+0.5*H(target_tensor,p_aux)
+            #loss = criterion(p_main, target_tensor)
+            loss=loss.mean()
+            
+            batch_loss += loss.mean().item()
+            
+            # Compute the average loss for the batch
+            batch_loss = batch_loss / batch_size
+            total_loss += batch_loss
+            
+            # Backward pass and optimization step
+            loss.backward()
+            optimizer.step()
+        
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss:.4f}')
+    print("End of finetuning")
+
 
 
 def test(model, binary_sequences, targets, batch_size,num_layers):
@@ -222,15 +306,18 @@ def test(model, binary_sequences, targets, batch_size,num_layers):
         accuracy = correct / total
         print(f'Test Accuracy: {accuracy * 100:.2f}%')
 
-
-
+########################################################################################################################à
 # Define parameters
 input_size = num_ancilla_qubits # Each input is a Detection round, vector of mmt of the Ancilla
 hidden_size = 64  # You can experiment with different sizes
 output_size = 1  # Output is the value of the observable after the mmt cycles
 batch_size=256
+
 learning_rate=0.00025
+learning_rate_fine=0.000025
 num_epochs=20
+num_epochs_fine=5
+
 num_layers=2
 hidden_layer_Ff=64
 dropout=0.2
@@ -240,11 +327,13 @@ model = BinaryLSTM(input_size, hidden_size, output_size,num_layers,hidden_layer_
 
 # Train the model
 train(model, X_train, y_train, num_epochs, learning_rate, batch_size,num_layers)
+
+finetune(model, X_train_exp, y_train_exp, num_epochs_fine, learning_rate_fine, batch_size,num_layers)
     
-test(model, X_test, y_test,batch_size,num_layers)
+test(model, X_test_exp, y_test_exp, batch_size, num_layers)
+
 
 import pymatching
-
 detector_error_model = circuit_google.detector_error_model(decompose_errors=True)
 matcher = pymatching.Matching.from_detector_error_model(detector_error_model)
 
