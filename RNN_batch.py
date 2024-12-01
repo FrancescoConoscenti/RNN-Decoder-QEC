@@ -1,10 +1,7 @@
 import stim
 import numpy as np
 from sklearn.model_selection import train_test_split
-import os
-
-path = r"RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\circuit_noisy.stim"
-#circuit_google = stim.Circuit.from_file(path)
+from typing import List
 
 distance=3
 rounds=5
@@ -19,7 +16,9 @@ if distance ==5:
     num_data_qubits=25
     num_ancilla_qubits=24
 
-#circuit_google.diagram('timeline-svg')
+path = r"RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\circuit_noisy.stim"
+circuit_google = stim.Circuit.from_file(path)
+
 
 circuit_surface = stim.Circuit.generated(
     "surface_code:rotated_memory_x",
@@ -51,6 +50,48 @@ test_size=0.2
 test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
+###################################################################################################################
+#experimental
+def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
+    shots = []
+    bytes_per_shot = (bits_per_shot + 7) // 8
+    for offset in range(0, len(data), bytes_per_shot):
+        shot = []
+        for k in range(bits_per_shot):
+            byte = data[offset + k // 8]
+            bit = (byte >> (k % 8)) % 2 == 1
+            shot.append(bit)
+        shots.append(shot)
+    return shots
+
+
+path1 = r"RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\detection_events.b8"
+path2 = r"RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\obs_flips_actual.01"
+round = 5
+bits_per_shot = round*8
+
+with open(path1, "rb") as file:
+    # Read the file content as bytes
+    data_detection = file.read()
+
+detection_exp = parse_b8(data_detection,bits_per_shot)
+detection_exp1 = np.array(detection_exp)
+detection_exp2 = detection_exp1.reshape(50000, rounds, num_ancilla_qubits)
+
+
+with open(path2, "rb") as file:
+    # Read the file content as bytes
+    data_obs = file.read()
+
+obs_exp = data_obs.replace(b"\n", b"")
+obs_exp_bit = [bit-48 for bit in obs_exp]
+obs_exp_bit_array = np.array(obs_exp_bit)
+
+
+X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
+
+##############################################################################################################################
+#train model
 
 import torch
 import torch.nn as nn
@@ -151,6 +192,50 @@ def train(model, binary_sequences, targets, num_epochs, learning_rate, batch_siz
         print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss/num_batches:.4f}')
 
 
+def finetune(model, binary_sequences, targets, num_epochs, learning_rate, batch_size,num_layers):
+    
+    criterion = nn.BCELoss()  # Binary Cross Entropy Loss
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    
+    # Calculate number of batches
+    num_batches = len(binary_sequences) // batch_size
+    
+    for epoch in range(num_epochs):
+        total_loss = 0
+        
+        for batch_idx in range(num_batches):
+            # Get batch data
+            batch_sequences = binary_sequences[batch_idx * batch_size : (batch_idx + 1) * batch_size]
+            batch_targets = targets[batch_idx * batch_size : (batch_idx + 1) * batch_size]
+            
+            optimizer.zero_grad()
+            
+            # Initialize hidden state for the batch with batch size
+            hidden = model.init_hidden(batch_size=batch_size)
+            
+            # Forward pass through each sequence in the batch
+            batch_loss = 0
+            
+            input_tensor = binary_array_to_tensor(batch_sequences)  # Prepare input tensor for batch
+            output, hidden = model(input_tensor, hidden)  # Forward pass
+             # Adjust dimensions if necessary
+            target_tensor = torch.tensor(batch_targets).float()
+            loss = criterion(output.squeeze(1), target_tensor)
+            batch_loss += loss.item()
+            
+            # Compute the average loss for the batch
+            batch_loss = batch_loss / batch_size
+            total_loss += batch_loss
+            
+            # Backward pass and optimization step
+            loss.backward()
+            optimizer.step()
+        
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss/num_batches:.4f}')
+    print("End of finetuning")
+
+
+
 def test(model, binary_sequences, targets, batch_size):
     model.eval()  # Set the model to evaluation mode (disable dropout, etc.)
     correct = 0
@@ -194,18 +279,21 @@ hidden_size = 128  # You can experiment with different sizes
 output_size = 1  # Output is the value of the observable after the mmt cycles
 batch_size = 256
 learning_rate=0.0001
+learning_rate_fine=0.0001
 num_epochs=10
+num_epochs_fine=3
 
 # Create an instance of the RNN model
 model = BinaryRNN(input_size, hidden_size, output_size)
 
 # Train the model
 train(model, X_train, y_train, num_epochs, learning_rate, batch_size)
+
+#finetuning
+#finetune(model, X_train_exp, y_train_exp, num_epochs_fine, learning_rate_fine, batch_size)
     
 test(model, X_test, y_test,batch_size)
-
-
-
+#test(model, X_test_exp, y_test_exp ,batch_size)
 
 
 import pymatching
