@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from typing import List
 
 distance=3
-rounds=1
+rounds=5
 
 if distance ==3:
     num_qubits=17
@@ -29,7 +29,7 @@ surface_code_circuit = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=2000000
+num_shots=20000000
 # Compile the sampler
 sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
