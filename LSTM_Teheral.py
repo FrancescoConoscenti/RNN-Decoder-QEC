@@ -48,7 +48,7 @@ detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits
 observable_flips = observable_flips.astype(int).flatten().tolist()
 
 test_size=0.2
-test_dataset_size=num_shots*test_size*rounds
+test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
 ###################################################################################################################
