@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from typing import List
 
 distance=3
-rounds=21
+rounds=1
 
 if distance ==3:
     num_qubits=17
@@ -16,7 +16,7 @@ if distance ==5:
     num_data_qubits=25
     num_ancilla_qubits=24
 
-path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
+path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r01_center_3_5/circuit_noisy.stim"
 circuit_google = stim.Circuit.from_file(path)
 
 
@@ -29,9 +29,9 @@ surface_code_circuit = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=20000000
+num_shots=2000000
 # Compile the sampler
-sampler = surface_code_circuit.compile_detector_sampler()
+sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
 
@@ -284,7 +284,7 @@ num_epochs=20
 num_epochs_fine=3
 
 print(f'RNN batch')
-print(f'circuit_surface, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
+print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
 
 # Create an instance of the RNN model
 model = BinaryRNN(input_size, hidden_size, output_size)
@@ -301,7 +301,7 @@ test(model, X_test, y_test,batch_size)
 
 import pymatching
 
-detector_error_model = surface_code_circuit.detector_error_model(decompose_errors=True)
+detector_error_model = circuit_google.detector_error_model(decompose_errors=True)
 matcher = pymatching.Matching.from_detector_error_model(detector_error_model)
 
 detection_test=detection_events[-int(test_dataset_size):]

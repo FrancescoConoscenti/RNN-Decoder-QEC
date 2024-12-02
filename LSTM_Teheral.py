@@ -5,7 +5,7 @@ from typing import List
 
 
 distance=3
-rounds=21
+rounds=1
 
 if distance ==3:
     num_qubits=17
@@ -31,9 +31,9 @@ surface_code_circuit = stim.Circuit.generated(
 
 ####################################################################################################################
 #get synthetic data
-num_shots=20000000
+num_shots=2000000
 # Compile the sampler
-sampler = surface_code_circuit.compile_detector_sampler()
+sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
 
@@ -323,7 +323,7 @@ hidden_layer_Ff=64
 dropout=0.2
 
 print(f'LSTM_Teheral')
-print(f'circuit_surface, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, num_layers={num_layers}, hidden_layer_Ff={hidden_layer_Ff},  learning_rate={learning_rate}, num_epochs={num_epochs}')
+print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, num_layers={num_layers}, hidden_layer_Ff={hidden_layer_Ff},  learning_rate={learning_rate}, num_epochs={num_epochs}')
 
 
 # Create an instance of the RNN model
@@ -339,7 +339,7 @@ test(model, X_test, y_test, batch_size, num_layers)
 
 import pymatching
 
-detector_error_model = surface_code_circuit.detector_error_model(decompose_errors=True)
+detector_error_model = circuit_google.detector_error_model(decompose_errors=True)
 matcher = pymatching.Matching.from_detector_error_model(detector_error_model)
 
 detection_test=detection_events[-int(test_dataset_size):]
