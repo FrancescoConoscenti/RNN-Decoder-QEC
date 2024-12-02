@@ -3,22 +3,33 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 distance=3
-num_ancilla_qubits=8
 rounds=5
 
-path = r"RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\circuit_noisy.stim"
+if distance ==3:
+    num_qubits=17
+    num_data_qubits=9
+    num_ancilla_qubits=8
+
+if distance ==5:
+    num_qubits=49
+    num_data_qubits=25
+    num_ancilla_qubits=24
+
+path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
 circuit_google = stim.Circuit.from_file(path)
 
 circuit_surface = stim.Circuit.generated(
     "surface_code:rotated_memory_x",
-    rounds=5,
-    distance=3,
+    rounds=rounds,
+    distance=distance,
     after_clifford_depolarization=0.01,
     after_reset_flip_probability=0.01,
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=50*256
+##################################################################################################################
+
+num_shots=50*256  #batch size multiple
 # Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
@@ -31,15 +42,13 @@ detection_events_numeric = [[int(value) for value in row] for row in detection_e
 detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
-
 observable_flips = observable_flips.astype(int).flatten().tolist()
 
+############################################################################################################
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchviz import make_dot
-
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -234,6 +243,7 @@ class BlockRNN(nn.Module):
     def init_hidden(self, batch_size):
         return torch.zeros(1, batch_size, self.hidden_size)
     
+##################################################################################################################
 
 def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_size,rounds):
     
@@ -325,7 +335,7 @@ def test(model, test_sequences, targets,batch_size):
     
     accuracy = correct / len(test_sequences)
     print(f'Test Accuracy: {accuracy * 100:.2f}%')
-
+#########################################################################################################################
 
 # Hyperparameters
 input_size = 1  # Each Lattice RNN cell takes 1 bit as input
@@ -338,10 +348,12 @@ num_epochs = 10
 batch_size = 256
 layers_sizes=[hidden_size*3,hidden_size*2,hidden_size ]
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f'2D LSTM_batch')
+print(f'circuit_surface, rounds={rounds}, distance = {distance} num_shots={num_shots}, batch_size = {batch_size}, hidden_size = {hidden_size}, batch_size = {batch_size}, layers_sizes={layers_sizes},  learning_rate={learning_rate}, num_epochs={num_epochs}')
+
 
 # Create a model instance
-model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, rounds,layers_sizes,batch_size).to(device)
+model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, rounds,layers_sizes,batch_size)
 
 # Define loss function and optimizer
 criterion = nn.BCELoss()  # Binary cross-entropy loss for binary classification
