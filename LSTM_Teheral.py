@@ -33,7 +33,7 @@ surface_code_circuit = stim.Circuit.generated(
 #get synthetic data
 num_shots=2000
 # Compile the sampler
-sampler = circuit_google.compile_detector_sampler()
+sampler = surface_code_circuit.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
 
@@ -322,6 +322,10 @@ num_layers=2
 hidden_layer_Ff=64
 dropout=0.2
 
+print(f'LSTM_Teheral')
+print(f'circuit_surface, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, num_layers={num_layers}, hidden_layer_Ff={hidden_layer_Ff},  learning_rate={learning_rate}, num_epochs={num_epochs}')
+
+
 # Create an instance of the RNN model
 model = BinaryLSTM(input_size, hidden_size, output_size,num_layers,hidden_layer_Ff,dropout)
 
@@ -352,4 +356,4 @@ for shot in range(int(test_dataset_size)):
     if not np.array_equal(actual_for_shot, predicted_for_shot):
         num_errors += 1
 
-print((test_dataset_size-num_errors)/test_dataset_size)
+print(f'Accuracy MWPM{(test_dataset_size-num_errors)/test_dataset_size}')

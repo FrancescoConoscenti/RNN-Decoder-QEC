@@ -20,7 +20,7 @@ path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit
 circuit_google = stim.Circuit.from_file(path)
 
 
-circuit_surface = stim.Circuit.generated(
+surface_code_circuit = stim.Circuit.generated(
     "surface_code:rotated_memory_x",
     rounds=5,
     distance=3,
@@ -31,7 +31,7 @@ circuit_surface = stim.Circuit.generated(
 
 num_shots=20000
 # Compile the sampler
-sampler = circuit_surface.compile_detector_sampler()
+sampler = surface_code_circuit.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
 
@@ -284,7 +284,7 @@ num_epochs=10
 num_epochs_fine=3
 
 print(f'RNN batch')
-print(f'circuit_surface, num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
+print(f'circuit_surface, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
 
 # Create an instance of the RNN model
 model = BinaryRNN(input_size, hidden_size, output_size)
@@ -301,7 +301,7 @@ test(model, X_test, y_test,batch_size)
 
 import pymatching
 
-detector_error_model = circuit_surface.detector_error_model(decompose_errors=True)
+detector_error_model = surface_code_circuit.detector_error_model(decompose_errors=True)
 matcher = pymatching.Matching.from_detector_error_model(detector_error_model)
 
 detection_test=detection_events[-int(test_dataset_size):]
@@ -319,4 +319,4 @@ for shot in range(int(test_dataset_size)):
     if not np.array_equal(actual_for_shot, predicted_for_shot):
         num_errors += 1
 
-print((test_dataset_size-num_errors)/test_dataset_size)
+print(f'Accuracy MWPM{(test_dataset_size-num_errors)/test_dataset_size}')
