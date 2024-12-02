@@ -5,7 +5,7 @@ from typing import List
 
 
 distance=3
-rounds=11
+rounds=17
 
 if distance ==3:
     num_qubits=17
