@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from typing import List
 
 distance=3
-rounds=17
+rounds=21
 
 if distance ==3:
     num_qubits=17
