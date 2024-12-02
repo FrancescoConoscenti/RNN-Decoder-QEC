@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=20000000
+num_shots=20000
 # Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
@@ -284,7 +284,7 @@ num_epochs=10
 num_epochs_fine=3
 
 print(f'RNN batch')
-print(f'hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
+print(f'circuit_surface, num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
 
 # Create an instance of the RNN model
 model = BinaryRNN(input_size, hidden_size, output_size)
