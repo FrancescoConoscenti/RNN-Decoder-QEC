@@ -328,10 +328,10 @@ model = BinaryLSTM(input_size, hidden_size, output_size,num_layers,hidden_layer_
 # Train the model
 train(model, X_train, y_train, num_epochs, learning_rate, batch_size,num_layers)
 
-finetune(model, X_train_exp, y_train_exp, num_epochs_fine, learning_rate_fine, batch_size,num_layers)
+#finetune(model, X_train_exp, y_train_exp, num_epochs_fine, learning_rate_fine, batch_size,num_layers)
     
-test(model, X_test_exp, y_test_exp, batch_size, num_layers)
-
+#test(model, X_test_exp, y_test_exp, batch_size, num_layers)
+test(model, X_test, y_test, batch_size, num_layers)
 
 import pymatching
 detector_error_model = circuit_google.detector_error_model(decompose_errors=True)
