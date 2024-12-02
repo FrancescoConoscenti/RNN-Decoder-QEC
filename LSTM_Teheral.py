@@ -48,7 +48,7 @@ detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits
 observable_flips = observable_flips.astype(int).flatten().tolist()
 
 test_size=0.2
-test_dataset_size=num_shots*test_size
+test_dataset_size=num_shots*test_size*rounds
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
 ###################################################################################################################
@@ -338,7 +338,8 @@ train(model, X_train, y_train, num_epochs, learning_rate, batch_size,num_layers)
 test(model, X_test, y_test, batch_size, num_layers)
 
 import pymatching
-detector_error_model = circuit_google.detector_error_model(decompose_errors=True)
+
+detector_error_model = surface_code_circuit.detector_error_model(decompose_errors=True)
 matcher = pymatching.Matching.from_detector_error_model(detector_error_model)
 
 detection_test=detection_events[-int(test_dataset_size):]
@@ -355,5 +356,6 @@ for shot in range(int(test_dataset_size)):
     predicted_for_shot = predictions[shot][0]
     if not np.array_equal(actual_for_shot, predicted_for_shot):
         num_errors += 1
+
 
 print(f'Accuracy MWPM{(test_dataset_size-num_errors)/test_dataset_size}')
