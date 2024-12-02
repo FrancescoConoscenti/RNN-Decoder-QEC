@@ -53,7 +53,7 @@ X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable
 
 ###################################################################################################################
 #experimental
-def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
+"""def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
     shots = []
     bytes_per_shot = (bits_per_shot + 7) // 8
     for offset in range(0, len(data), bytes_per_shot):
@@ -90,7 +90,7 @@ obs_exp_bit_array = np.array(obs_exp_bit)
 
 
 X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
-
+"""
 ##############################################################################################################################
 #train model
 import torch
