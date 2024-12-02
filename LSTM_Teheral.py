@@ -5,7 +5,7 @@ from typing import List
 
 
 distance=3
-rounds=10
+rounds=1
 
 if distance ==3:
     num_qubits=17
@@ -31,7 +31,7 @@ surface_code_circuit = stim.Circuit.generated(
 
 ####################################################################################################################
 #get synthetic data
-num_shots=2000
+num_shots=2000000
 # Compile the sampler
 sampler = surface_code_circuit.compile_detector_sampler()
 # Sample shots, with observables

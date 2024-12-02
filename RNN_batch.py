@@ -4,7 +4,7 @@ from sklearn.model_selection import train_test_split
 from typing import List
 
 distance=3
-rounds=10
+rounds=1
 
 if distance ==3:
     num_qubits=17
@@ -29,7 +29,7 @@ surface_code_circuit = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=20000
+num_shots=2000000
 # Compile the sampler
 sampler = surface_code_circuit.compile_detector_sampler()
 # Sample shots, with observables
@@ -280,7 +280,7 @@ output_size = 1  # Output is the value of the observable after the mmt cycles
 batch_size = 256
 learning_rate=0.0001
 learning_rate_fine=0.0001
-num_epochs=10
+num_epochs=20
 num_epochs_fine=3
 
 print(f'RNN batch')
