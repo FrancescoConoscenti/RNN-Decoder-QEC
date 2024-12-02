@@ -283,6 +283,9 @@ learning_rate_fine=0.0001
 num_epochs=10
 num_epochs_fine=3
 
+print(f'RNN batch')
+print(f'hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
+
 # Create an instance of the RNN model
 model = BinaryRNN(input_size, hidden_size, output_size)
 
