@@ -16,7 +16,7 @@ if distance ==5:
     num_data_qubits=25
     num_ancilla_qubits=24
 
-path = r"google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\circuit_noisy.stim"
+path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
 circuit_google = stim.Circuit.from_file(path)
 
 
@@ -65,8 +65,8 @@ def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
     return shots
 
 
-path1 = r"RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\detection_events.b8"
-path2 = r"RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\obs_flips_actual.01"
+path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/detection_events.b8"
+path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/obs_flips_actual.01"
 round = 5
 bits_per_shot = round*8
 
