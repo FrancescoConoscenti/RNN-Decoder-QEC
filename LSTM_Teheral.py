@@ -22,8 +22,8 @@ circuit_google = stim.Circuit.from_file(path)
 
 surface_code_circuit = stim.Circuit.generated(
     "surface_code:rotated_memory_x",
-    rounds=5,
-    distance=3,
+    rounds=rounds,
+    distance=distance,
     after_clifford_depolarization=0.01,
     after_reset_flip_probability=0.01,
     before_measure_flip_probability=0.01,
