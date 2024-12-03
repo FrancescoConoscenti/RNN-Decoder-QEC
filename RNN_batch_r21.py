@@ -20,7 +20,7 @@ path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r21_center_3_5/circuit
 circuit_google = stim.Circuit.from_file(path)
 
 
-circuit_suruface = stim.Circuit.generated(
+circuit_surface = stim.Circuit.generated(
     "surface_code:rotated_memory_x",
     rounds=rounds,
     distance=distance,
