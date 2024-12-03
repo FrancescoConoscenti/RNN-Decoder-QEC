@@ -16,7 +16,7 @@ if distance ==5:
     num_data_qubits=25
     num_ancilla_qubits=24
 
-path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r01_center_3_5/circuit_noisy.stim"
+path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r21_center_3_5/circuit_noisy.stim"
 circuit_google = stim.Circuit.from_file(path)
 
 
@@ -31,7 +31,7 @@ circuit_surface = stim.Circuit.generated(
 
 num_shots=20000
 # Compile the sampler
-sampler = circuit_surface.compile_detector_sampler()
+sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
 
