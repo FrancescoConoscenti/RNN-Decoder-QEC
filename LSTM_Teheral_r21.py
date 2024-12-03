@@ -5,7 +5,7 @@ from typing import List
 
 
 distance=3
-rounds=1
+rounds=21
 
 if distance ==3:
     num_qubits=17
@@ -31,7 +31,7 @@ circuit_surface = stim.Circuit.generated(
 
 ####################################################################################################################
 #get synthetic data
-num_shots=2000000
+num_shots=20000000
 # Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
@@ -336,26 +336,3 @@ train(model, X_train, y_train, num_epochs, learning_rate, batch_size,num_layers)
     
 #test(model, X_test_exp, y_test_exp, batch_size, num_layers)
 test(model, X_test, y_test, batch_size, num_layers)
-
-import pymatching
-
-detector_error_model = circuit_google.detector_error_model(decompose_errors=True)
-matcher = pymatching.Matching.from_detector_error_model(detector_error_model)
-
-detection_test=detection_events[-int(test_dataset_size):]
-observable_test=observable_flips[-int(test_dataset_size):]
-
-
-# Run the decoder with the test samples
-predictions = matcher.decode_batch(detection_test)
-
-# Count the mistakes.
-num_errors = 0
-for shot in range(int(test_dataset_size)):
-    actual_for_shot = observable_test[shot]
-    predicted_for_shot = predictions[shot][0]
-    if not np.array_equal(actual_for_shot, predicted_for_shot):
-        num_errors += 1
-
-
-print(f'Accuracy MWPM{(test_dataset_size-num_errors)/test_dataset_size}')
