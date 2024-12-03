@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=20000
+num_shots=20000000
 # Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables

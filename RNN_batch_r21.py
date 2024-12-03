@@ -20,7 +20,7 @@ path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r21_center_3_5/circuit
 circuit_google = stim.Circuit.from_file(path)
 
 
-circuit_surface = stim.Circuit.generated(
+circuit_suruface = stim.Circuit.generated(
     "surface_code:rotated_memory_x",
     rounds=rounds,
     distance=distance,
@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=20000
+num_shots=20000000
 # Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
