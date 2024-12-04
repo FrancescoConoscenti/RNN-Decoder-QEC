@@ -31,7 +31,7 @@ circuit_surface = stim.Circuit.generated(
 
 ####################################################################################################################
 #get synthetic data
-num_shots=20000000
+num_shots=20000
 # Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
@@ -50,6 +50,11 @@ observable_flips = observable_flips.astype(int).flatten().tolist()
 test_size=0.2
 test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
+
+
+np.save('data_stim/detection_surface_r5.npy', detection_array1)
+np.save('data_stim/observable_surface_r5.npy', observable_flips)
+
 
 ###################################################################################################################
 #experimental
@@ -311,10 +316,10 @@ def test(model, binary_sequences, targets, batch_size,num_layers):
 input_size = num_ancilla_qubits # Each input is a Detection round, vector of mmt of the Ancilla
 hidden_size = 64  # You can experiment with different sizes
 output_size = 1  # Output is the value of the observable after the mmt cycles
-batch_size=256
+batch_size=512
 
-learning_rate=0.00025
-learning_rate_fine=0.000025
+learning_rate=0.0001
+learning_rate_fine=0.00001
 num_epochs=20
 num_epochs_fine=5
 
