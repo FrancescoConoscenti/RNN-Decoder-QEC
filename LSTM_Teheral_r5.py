@@ -31,7 +31,7 @@ circuit_surface = stim.Circuit.generated(
 
 ####################################################################################################################
 #get synthetic data
-num_shots=20000
+num_shots=20000000
 # Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
