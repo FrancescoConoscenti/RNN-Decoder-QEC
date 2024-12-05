@@ -31,7 +31,7 @@ circuit_surface = stim.Circuit.generated(
 
 num_shots=20000000
 # Compile the sampler
-sampler = circuit_surface.compile_detector_sampler()
+sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
 
@@ -44,6 +44,14 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 
 observable_flips = observable_flips.astype(int).flatten().tolist()
+
+# Save with compression
+np.savez_compressed('data_stim/google_r11.npz', detection_array1=detection_array1, observable_flips=observable_flips)
+
+# Load the compressed data
+loaded_data = np.load('data_stim/google_r11.npz')
+detection_array1 = loaded_data['detection_array1']
+observable_flips = loaded_data['observable_flips']
 
 
 test_size=0.2
@@ -284,7 +292,7 @@ num_epochs=20
 num_epochs_fine=3
 
 print(f'RNN batch')
-print(f'circuit_surface, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
+print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
 
 # Create an instance of the RNN model
 model = BinaryRNN(input_size, hidden_size, output_size)

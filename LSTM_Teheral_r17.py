@@ -322,7 +322,7 @@ batch_size=512
 
 learning_rate=0.0001
 learning_rate_fine=0.000025
-num_epochs=30
+num_epochs=20
 num_epochs_fine=5
 
 num_layers=2
