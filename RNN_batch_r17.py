@@ -29,8 +29,8 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=20000000
-"""# Compile the sampler
+num_shots=20000
+# Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
@@ -43,13 +43,15 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 
-observable_flips = observable_flips.astype(int).flatten().tolist()"""
+observable_flips = observable_flips.astype(int).flatten().tolist()
 
-"""np.save('data_stim/detection_surface_r17.npy', detection_array1)
-np.save('data_stim/observable_surface_r17.npy', observable_flips)"""
+# Save with compression
+np.savez_compressed('data_stim/surfaces_r17.npz', detection_array1=detection_array1, observable_flips=observable_flips)
 
-detection_array1 = np.load('data_stim/detection_surface_r17.npy')
-observable_flips = np.load('data_stim/observable_surface_r17.npy')
+# Load the compressed data
+loaded_data = np.load('data_stim/surfaces_r17.npz')
+detection_array1 = loaded_data['detection_array1']
+observable_flips = loaded_data['observable_flips']
 
 
 test_size=0.2
