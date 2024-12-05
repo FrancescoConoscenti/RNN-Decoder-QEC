@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=10000000
+num_shots=20000000
 # Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
@@ -46,10 +46,10 @@ detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits
 observable_flips = observable_flips.astype(int).flatten().tolist()
 
 """np.save('data_stim/detection_surface_r17.npy', detection_array1)
-np.save('data_stim/observable_surface_r17.npy', observable_flips)
+np.save('data_stim/observable_surface_r17.npy', observable_flips)"""
 
 detection_array1 = np.load('data_stim/detection_surface_r17.npy')
-observable_flips = np.load('data_stim/observable_surface_r17.npy')"""
+observable_flips = np.load('data_stim/observable_surface_r17.npy')
 
 
 test_size=0.2
