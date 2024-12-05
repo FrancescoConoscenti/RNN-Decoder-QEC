@@ -51,9 +51,14 @@ test_size=0.2
 test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
+# Save with compression
+np.savez_compressed('data_stim/surfaces_r5.npz', detection_array1=detection_array1, observable_flips=observable_flips)
 
-"""np.save('data_stim/detection_surface_r5.npy', detection_array1)
-np.save('data_stim/observable_surface_r5.npy', observable_flips)"""
+"""# Load the compressed data
+loaded_data = np.load('data_stim/surfaces_r5.npz')
+detection_array1 = loaded_data['detection_array1']
+observable_flips = loaded_data['observable_flips']"""
+
 ###################################################################################################################
 #experimental
 """def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
@@ -318,7 +323,7 @@ batch_size=512
 
 learning_rate=0.0001
 learning_rate_fine=0.00001
-num_epochs=20
+num_epochs=30
 num_epochs_fine=5
 
 num_layers=2
