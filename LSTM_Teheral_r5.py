@@ -31,7 +31,7 @@ circuit_surface = stim.Circuit.generated(
 
 ####################################################################################################################
 #get synthetic data
-num_shots=20000000
+num_shots=10000000
 # Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
@@ -52,8 +52,8 @@ test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
 
-np.save('data_stim/detection_surface_r5.npy', detection_array1)
-np.save('data_stim/observable_surface_r5.npy', observable_flips)
+"""np.save('data_stim/detection_surface_r5.npy', detection_array1)
+np.save('data_stim/observable_surface_r5.npy', observable_flips)"""
 ###################################################################################################################
 #experimental
 """def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
