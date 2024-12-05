@@ -30,7 +30,7 @@ circuit_surface = stim.Circuit.generated(
     before_round_data_depolarization=0.01)
 
 num_shots=20000000
-# Compile the sampler
+"""# Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
@@ -43,7 +43,7 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 
-observable_flips = observable_flips.astype(int).flatten().tolist()
+observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
 """np.save('data_stim/detection_surface_r17.npy', detection_array1)
 np.save('data_stim/observable_surface_r17.npy', observable_flips)"""
