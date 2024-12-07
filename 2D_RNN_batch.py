@@ -265,17 +265,20 @@ def test(model, test_sequences, targets,batch_size):
     accuracy = correct / len(test_sequences)
     print(f'Test Accuracy: {accuracy * 100:.2f}%')
 
-##################################################################################################################
+################################################################################################################
 
 # Hyperparameters
 input_size = 1  # Each Lattice RNN cell takes 1 bit as input
-hidden_size = 64  # Hidden size of each RNN cell
+hidden_size = 128  # Hidden size of each RNN cell
 output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 2  # Number of rows in the grid
 grid_width = 4   # Number of columns in the grid
-learning_rate = 0.001
+learning_rate = 0.0001
 num_epochs = 20
 batch_size = 256
+
+print(f'2D_RNN batch')
+print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
 
 # Create a model instance
 model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, rounds,batch_size)
