@@ -49,6 +49,9 @@ loaded_data = np.load('data_stim/google_r5.npz')
 detection_array1 = loaded_data['detection_array1']
 observable_flips = loaded_data['observable_flips']
 
+print(detection_array1.shape)
+print(observable_flips.shape)
+
 ################################################################################################################
 
 import torch
