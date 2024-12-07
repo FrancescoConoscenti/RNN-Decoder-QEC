@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 distance=3
-rounds=1
+rounds=5
 
 if distance ==3:
     num_qubits=17
@@ -29,8 +29,8 @@ circuit_surface = stim.Circuit.generated(
 
 #############################################################################################################
 
-num_shots=64*1000
-# Compile the sampler
+num_shots=2000000
+"""# Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
@@ -42,10 +42,12 @@ detection_events_numeric = [[int(value) for value in row] for row in detection_e
 detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
-observable_flips = observable_flips.astype(int).flatten().tolist()
+observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
-np.save('data_stim/detection_surface_r1.npy', detection_array1)
-np.save('data_stim/observable_surface_r1.npy', observable_flips)
+# Load the compressed data
+loaded_data = np.load('data_stim/google_r5.npz')
+detection_array1 = loaded_data['detection_array1']
+observable_flips = loaded_data['observable_flips']
 
 ################################################################################################################
 
@@ -178,12 +180,12 @@ class BlockRNN(nn.Module):
 def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_size,rounds):
     model.train()  # Set the model to training mode
 
-    num_samples = len(X_train[:,0,0])
+    num_batches = len(X_train[:,0,0]) // batch_size
     
     for epoch in range(num_epochs):
         running_loss = 0.0
         
-        for i in range(0, num_samples, batch_size):
+        for i in range(0, num_batches, batch_size):
             # Create mini-batches
             batch_x = torch.from_numpy(X_train[i:i + batch_size])
             batch_y = torch.Tensor(y_train[i:i + batch_size])
@@ -208,7 +210,7 @@ def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_s
             running_loss += loss.item()
 
         # Print average loss after each epoch
-        avg_loss = running_loss / (num_samples // batch_size)
+        avg_loss = running_loss / (num_batches // batch_size)
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
 
     print("Training finished.")
@@ -267,9 +269,9 @@ hidden_size = 64  # Hidden size of each RNN cell
 output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 2  # Number of rows in the grid
 grid_width = 4   # Number of columns in the grid
-learning_rate = 0.001
-num_epochs = 10
-batch_size = 64
+learning_rate = 0.0001
+num_epochs = 20
+batch_size = 256
 
 print(f'2D_RNN batch')
 print(f'circuit_surface, rounds={rounds}, distance = {distance} num_shots={num_shots}, batch_size = {batch_size}, hidden_size = {hidden_size}, batch_size = {batch_size},  learning_rate={learning_rate}, num_epochs={num_epochs}')
