@@ -232,11 +232,11 @@ def test(model, test_sequences, targets,batch_size):
     correct = 0
 
     hidden = None
-    num_samples = len(test_sequences[:,0,0])
+    num_batches = len(X_train[:,0,0]) // batch_size
     
     
     with torch.no_grad():  # Disable gradient computation for testing
-        for i in range(0, num_samples, batch_size):
+        for i in range(0, num_batches, batch_size):
             
             output=np.zeros(batch_size)
             batch_x = torch.from_numpy(test_sequences[i:i + batch_size])
@@ -270,8 +270,8 @@ output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 2  # Number of rows in the grid
 grid_width = 4   # Number of columns in the grid
 learning_rate = 0.0001
-num_epochs = 20
-batch_size = 64
+num_epochs = 30
+batch_size = 256
 
 print(f'2D_RNN batch')
 print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, batch_size = {batch_size}, hidden_size = {hidden_size}, batch_size = {batch_size},  learning_rate={learning_rate}, num_epochs={num_epochs}')
