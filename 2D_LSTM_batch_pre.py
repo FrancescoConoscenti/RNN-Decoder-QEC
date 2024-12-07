@@ -356,17 +356,17 @@ def test(model, test_sequences, targets,batch_size):
 
 # Hyperparameters
 input_size = 1  # Each Lattice RNN cell takes 1 bit as input
-hidden_size = 64 # Hidden size of each RNN cell
+hidden_size = 128 # Hidden size of each RNN cell
 output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 4  # Number of rows in the grid
 grid_width = 2   # Number of columns in the grid
 learning_rate = 0.0005
-num_epochs = 10
+num_epochs = 20
 batch_size = 256
 layers_sizes=[hidden_size*3,hidden_size*2,hidden_size ]
 
 print(f'2D LSTM_batch pre')
-print(f'circuit_surface, rounds={rounds}, distance = {distance} num_shots={num_shots}, batch_size = {batch_size}, hidden_size = {hidden_size}, batch_size = {batch_size}, layers_sizes={layers_sizes},  learning_rate={learning_rate}, num_epochs={num_epochs}')
+print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, batch_size = {batch_size}, hidden_size = {hidden_size}, batch_size = {batch_size}, layers_sizes={layers_sizes},  learning_rate={learning_rate}, num_epochs={num_epochs}')
 
 # Create a model instance
 model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, rounds,layers_sizes,batch_size)
