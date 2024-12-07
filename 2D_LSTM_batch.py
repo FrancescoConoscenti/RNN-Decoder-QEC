@@ -31,7 +31,7 @@ circuit_surface = stim.Circuit.generated(
 
 num_shots=50*256  #batch size multiple
 # Compile the sampler
-sampler = circuit_surface.compile_detector_sampler()
+sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
 
