@@ -15,7 +15,7 @@ if distance ==5:
     num_data_qubits=25
     num_ancilla_qubits=24
 
-path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
+"""path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
 circuit_google = stim.Circuit.from_file(path)
 
 circuit_surface = stim.Circuit.generated(
@@ -25,7 +25,7 @@ circuit_surface = stim.Circuit.generated(
     after_clifford_depolarization=0.01,
     after_reset_flip_probability=0.01,
     before_measure_flip_probability=0.01,
-    before_round_data_depolarization=0.01)
+    before_round_data_depolarization=0.01)"""
 
 #############################################################################################################
 
@@ -188,10 +188,10 @@ def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_s
     for epoch in range(num_epochs):
         running_loss = 0.0
         
-        for i in range(0, num_batches, batch_size):
+        for batch_idx in range(num_batches):
             # Create mini-batches
-            batch_x = torch.from_numpy(X_train[i:i + batch_size])
-            batch_y = torch.Tensor(y_train[i:i + batch_size])
+            batch_x = torch.from_numpy(X_train[batch_idx * batch_size : (batch_idx + 1) * batch_size])
+            batch_y = torch.Tensor(y_train[batch_idx * batch_size : (batch_idx + 1) * batch_size])
 
             # Zero the parameter gradients
             optimizer.zero_grad()
@@ -213,7 +213,7 @@ def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_s
             running_loss += loss.item()
 
         # Print average loss after each epoch
-        avg_loss = running_loss / (num_batches // batch_size)
+        avg_loss = running_loss / num_batches 
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
 
     print("Training finished.")
@@ -235,16 +235,17 @@ def test(model, test_sequences, targets,batch_size):
     correct = 0
 
     hidden = None
-    num_batches = len(X_train[:,0,0]) // batch_size
+    num_batches = len(test_sequences[:,0,0]) // batch_size
     
     
     with torch.no_grad():  # Disable gradient computation for testing
-        for i in range(0, num_batches, batch_size):
-            
+        for batch_idx in range(num_batches):
+        
             output=np.zeros(batch_size)
-            batch_x = torch.from_numpy(test_sequences[i:i + batch_size])
-            target = targets[i:i + batch_size]
+            batch_x = torch.from_numpy(test_sequences[batch_idx * batch_size : (batch_idx + 1) * batch_size])
+            target = targets[batch_idx * batch_size : (batch_idx + 1) * batch_size]
             rounds = len(batch_x[0,:,0])
+            
             
             # Initialize hidden state
             #if hidden is None:
@@ -272,12 +273,9 @@ hidden_size = 64  # Hidden size of each RNN cell
 output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 2  # Number of rows in the grid
 grid_width = 4   # Number of columns in the grid
-learning_rate = 0.0001
-num_epochs = 30
+learning_rate = 0.001
+num_epochs = 20
 batch_size = 256
-
-print(f'2D_RNN batch')
-print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, batch_size = {batch_size}, hidden_size = {hidden_size}, batch_size = {batch_size},  learning_rate={learning_rate}, num_epochs={num_epochs}')
 
 # Create a model instance
 model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, rounds,batch_size)
