@@ -27,8 +27,10 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=100*256 #batch size multiple
-# Compile the sampler
+##################################################################################################à
+
+num_shots=2000000 #batch size multiple
+"""# Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
@@ -41,7 +43,11 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 
-observable_flips = observable_flips.astype(int).flatten().tolist()
+observable_flips = observable_flips.astype(int).flatten().tolist()"""
+
+loaded_data = np.load('data_stim/google_r5.npz')
+detection_array1 = loaded_data['detection_array1']
+observable_flips = loaded_data['observable_flips']
 
 ############################################################################################################
 
@@ -261,7 +267,7 @@ def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_s
     model.train()  # Set the model to training mode
     # If batch_size is None, set it to the full size of the dataset (no mini-batching)
 
-    num_samples = len(X_train[:,0,0])
+    num_batches = len(X_train[:,0,0]) // batch_size
     
     for epoch in range(num_epochs):
         running_loss = 0.0
@@ -272,10 +278,10 @@ def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_s
         # y_train = y_train[permutation]
 
         # Mini-batch training loop
-        for i in range(0, num_samples, batch_size):
+        for batch_idx in range(num_batches):
             # Create mini-batches
-            batch_x = torch.from_numpy(X_train[i:i + batch_size])
-            batch_y = torch.Tensor(y_train[i:i + batch_size])
+            batch_x = torch.from_numpy(X_train[batch_idx * batch_size : (batch_idx + 1) * batch_size])
+            batch_y = torch.Tensor(y_train[batch_idx * batch_size : (batch_idx + 1) * batch_size])
 
             # Zero the parameter gradients
             optimizer.zero_grad()
@@ -297,7 +303,7 @@ def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_s
             running_loss += loss.item()
 
         # Print average loss after each epoch
-        avg_loss = running_loss / (num_samples // batch_size)
+        avg_loss = running_loss / num_batches
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
 
     print("Training finished.")
@@ -317,15 +323,15 @@ def test(model, test_sequences, targets,batch_size):
     correct = 0
 
     hidden = None
-    num_samples = len(test_sequences[:,0,0])
+    num_batches = len(test_sequences[:,0,0]) // batch_size
     
     
     with torch.no_grad():  # Disable gradient computation for testing
-        for i in range(0, num_samples, batch_size):
-            
+        for batch_idx in range(num_batches):
+        
             output=np.zeros(batch_size)
-            batch_x = torch.from_numpy(test_sequences[i:i + batch_size])
-            target = targets[i:i + batch_size]
+            batch_x = torch.from_numpy(test_sequences[batch_idx * batch_size : (batch_idx + 1) * batch_size])
+            target = targets[batch_idx * batch_size : (batch_idx + 1) * batch_size]
             rounds = len(batch_x[0,:,0])
             
             # Initialize hidden state
