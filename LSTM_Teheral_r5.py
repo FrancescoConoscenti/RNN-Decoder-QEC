@@ -31,8 +31,8 @@ circuit_surface = stim.Circuit.generated(
 
 ####################################################################################################################
 #get synthetic data
-num_shots=10000000
-# Compile the sampler
+num_shots=2000000
+"""# Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
@@ -53,11 +53,11 @@ X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable
 
 # Save with compression
 np.savez_compressed('data_stim/surfaces_r5.npz', detection_array1=detection_array1, observable_flips=observable_flips)
-
-"""# Load the compressed data
-loaded_data = np.load('data_stim/surfaces_r5.npz')
+"""
+# Load the compressed data
+loaded_data = np.load('data_stim/google_r5.npz')
 detection_array1 = loaded_data['detection_array1']
-observable_flips = loaded_data['observable_flips']"""
+observable_flips = loaded_data['observable_flips']
 
 ###################################################################################################################
 #experimental
