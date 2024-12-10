@@ -15,7 +15,7 @@ if distance ==5:
     num_data_qubits=25
     num_ancilla_qubits=24
 
-path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
+"""path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
 circuit_google = stim.Circuit.from_file(path)
 
 circuit_surface = stim.Circuit.generated(
@@ -25,7 +25,7 @@ circuit_surface = stim.Circuit.generated(
     after_clifford_depolarization=0.01,
     after_reset_flip_probability=0.01,
     before_measure_flip_probability=0.01,
-    before_round_data_depolarization=0.01)
+    before_round_data_depolarization=0.01)"""
 
 ##################################################################################################################
 
@@ -343,11 +343,11 @@ def test(model, test_sequences, targets,batch_size):
 
 # Hyperparameters
 input_size = 1  # Each Lattice RNN cell takes 1 bit as input
-hidden_size = 64 # Hidden size of each RNN cell
+hidden_size = 128 # Hidden size of each RNN cell
 output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 4  # Number of rows in the grid
 grid_width = 2   # Number of columns in the grid
-learning_rate = 0.0001
+learning_rate = 0.0005
 num_epochs = 20
 batch_size = 256
 layers_sizes=[hidden_size*3,hidden_size*2,hidden_size ]
