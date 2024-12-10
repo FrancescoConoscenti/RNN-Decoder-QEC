@@ -49,7 +49,7 @@ observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
 
 # Load the compressed data
-loaded_data = np.load('data_stim/surfaces_r17.npz')
+loaded_data = np.load('data_stim/google_r17.npz')
 detection_array1 = loaded_data['detection_array1']
 observable_flips = loaded_data['observable_flips']
 
