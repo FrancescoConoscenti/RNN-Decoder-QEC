@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 distance=3
-rounds=5
+rounds=11
 
 if distance ==3:
     num_qubits=17
@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
 
 #############################################################################################################
 
-num_shots=2000000
+num_shots=20000000
 """# Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
@@ -45,7 +45,7 @@ detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
 # Load the compressed data
-loaded_data = np.load('data_stim/google_r5.npz')
+loaded_data = np.load('data_stim/google_r11.npz')
 detection_array1 = loaded_data['detection_array1']
 observable_flips = loaded_data['observable_flips']
 
