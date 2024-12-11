@@ -342,7 +342,7 @@ grid_width = 4   # Number of columns in the grid
 learning_rate = 0.0001
 num_epochs = 20
 batch_size = 512
-n_jobs = 8
+n_jobs = 16
 
 print(f'2D_RNN batch')
 print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}, njobs={n_jobs}')
