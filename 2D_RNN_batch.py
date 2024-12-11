@@ -261,7 +261,7 @@ def train_rnn_parallel(model,  X_train, y_train, criterion, optimizer,  num_epoc
 
     
         #results = [process_batch(batch_x, batch_y,i, model, criterion, rounds) for i, (batch_x, batch_y) in enumerate(batches)]
-        results = Parallel(n_jobs=n_jobs,  backend='multiprocessing')(delayed(process_batch)(batch_x, batch_y,i,  model, criterion, rounds)for i, (batch_x, batch_y) in enumerate(batches))   
+        results = Parallel(n_jobs=n_jobs)(delayed(process_batch)(batch_x, batch_y,i,  model, criterion, rounds)for i, (batch_x, batch_y) in enumerate(batches))   
         
         
         # Aggregate results
