@@ -360,9 +360,9 @@ hidden_size = 128 # Hidden size of each RNN cell
 output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 4  # Number of rows in the grid
 grid_width = 2   # Number of columns in the grid
-learning_rate = 0.0005
+learning_rate = 0.001
 num_epochs = 20
-batch_size = 256
+batch_size = 1024
 layers_sizes=[hidden_size*3,hidden_size*2,hidden_size ]
 
 print(f'2D LSTM_batch pre')
@@ -381,5 +381,6 @@ X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable
 
 # Training the model
 train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
+
 
 test(model, X_test, y_test,batch_size)
