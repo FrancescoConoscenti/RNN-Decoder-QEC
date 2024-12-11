@@ -339,9 +339,9 @@ hidden_size = 128  # Hidden size of each RNN cell
 output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 2  # Number of rows in the grid
 grid_width = 4   # Number of columns in the grid
-learning_rate = 0.0001
+learning_rate = 0.001
 num_epochs = 20
-batch_size = 512
+batch_size = 1024
 n_jobs = 16
 
 print(f'2D_RNN batch')
