@@ -368,6 +368,8 @@ layers_sizes=[hidden_size*3,hidden_size*2,hidden_size ]
 print(f'2D LSTM_batch pre')
 print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, batch_size = {batch_size}, hidden_size = {hidden_size}, batch_size = {batch_size}, layers_sizes={layers_sizes},  learning_rate={learning_rate}, num_epochs={num_epochs}')
 
+#########################################################################################################
+
 # Create a model instance
 model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, rounds,layers_sizes,batch_size)
 
@@ -384,3 +386,25 @@ train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,r
 
 
 test(model, X_test, y_test,batch_size)
+
+# Assuming `model` is your trained LSTM model
+torch.save(model.state_dict(), "2D_LSTM_pre_r5.pth")
+
+#############################################################################################################
+
+"""
+# Reinitialize the model architecture
+model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, rounds,layers_sizes,batch_size)
+
+# Load the saved weights
+model.load_state_dict(torch.load("lstm_model.pth"))
+
+# Training the model
+finetune_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
+
+X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
+
+
+test(model, X_test, y_test,batch_size)
+"""
+
