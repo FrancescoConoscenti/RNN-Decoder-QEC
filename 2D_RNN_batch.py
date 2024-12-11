@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 distance=3
-rounds=11
+rounds=17
 
 if distance ==3:
     num_qubits=17
@@ -45,7 +45,7 @@ detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
 # Load the compressed data
-loaded_data = np.load('data_stim/google_r11.npz')
+loaded_data = np.load('data_stim/google_r17.npz')
 detection_array1 = loaded_data['detection_array1']
 observable_flips = loaded_data['observable_flips']
 
@@ -218,6 +218,74 @@ def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_s
 
 ##########################################################################################################
 
+from joblib import Parallel, delayed
+
+def process_batch(batch_x, batch_y,i, model, criterion, rounds):
+    # Forward pass
+    outputs, hidden = model(batch_x, rounds)
+    loss = criterion(outputs.squeeze(1), batch_y)
+
+    # Backward pass
+    loss.backward()
+
+    # Collect gradients
+    grads = [param.grad.clone() if param.grad is not None else torch.zeros_like(param)
+             for param in model.parameters()]
+    
+    print(i)
+    print("ff")
+    
+    # Reduce gradients over batch dimension
+    #reduced_grads = [grad.sum(dim=0, keepdim=True) if len(grad.shape) > 1 else grad 
+    #               for grad in grads]
+    
+    return loss.item(), grads
+
+
+def train_rnn_parallel(model,  X_train, y_train, criterion, optimizer,  num_epochs, batch_size, rounds, n_jobs):
+    
+    num_samples = len(X_train[:,0,0])
+
+    for epoch in range(num_epochs):
+        running_loss = 0.0  # Reset loss for each epoch
+
+        # Ensure model is in training mode
+        model.train()
+
+        # Split data into batches
+        batches = [
+            (torch.from_numpy(X_train[i:i + batch_size]),
+            torch.Tensor(y_train[i:i + batch_size]))
+            for i in range(0, num_samples, batch_size)
+        ]
+
+    
+        #results = [process_batch(batch_x, batch_y,i, model, criterion, rounds) for i, (batch_x, batch_y) in enumerate(batches)]
+        results = Parallel(n_jobs=n_jobs,  backend='multiprocessing')(delayed(process_batch)(batch_x, batch_y,i,  model, criterion, rounds)for i, (batch_x, batch_y) in enumerate(batches))   
+        
+        
+        # Aggregate results
+        optimizer.zero_grad()  # Clear gradients before aggregation
+        
+        for loss, grads in results:
+            running_loss += loss
+            for param, grad in zip(model.parameters(), grads):
+                if grad.shape != param.shape:
+                    raise ValueError(f"Gradient shape {grad.shape} does not match parameter shape {param.shape}.")
+                if param.grad is None:
+                    param.grad = grad.clone()  # Initialize gradient
+                else:
+                    param.grad += grad  # Accumulate gradient
+
+
+        # Step optimizer after aggregating all gradients
+        optimizer.step()
+
+        # Log the epoch's loss
+        avg_loss = running_loss / len(batches)
+        print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {avg_loss:.4f}")
+
+#############################################################################################################
 def binary_array_to_tensor(binary_array):
     # Check if the input is a NumPy array, if not, convert it
     if isinstance(binary_array, np.ndarray):
@@ -273,10 +341,11 @@ grid_height = 2  # Number of rows in the grid
 grid_width = 4   # Number of columns in the grid
 learning_rate = 0.0001
 num_epochs = 20
-batch_size = 256
+batch_size = 512
+n_jobs = 8
 
 print(f'2D_RNN batch')
-print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
+print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}, njobs={n_jobs}')
 
 # Create a model instance
 model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, rounds,batch_size)
@@ -290,6 +359,7 @@ test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
 # Training the model
-train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
+#train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
+train_rnn_parallel(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds, n_jobs)
 
 test(model, X_test, y_test,batch_size)
