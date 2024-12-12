@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
 
 #############################################################################################################
 
-num_shots=10000000
+num_shots=10000
 """# Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
@@ -47,9 +47,9 @@ observable_flips = observable_flips.astype(int).flatten().tolist()"""
 # Load the compressed data
 loaded_data = np.load('data_stim/google_r17.npz')
 detection_array1 = loaded_data['detection_array1']
-detection_array1 = detection_array1[0:10000000,:,:]
+detection_array1 = detection_array1[0:10000,:,:]
 observable_flips = loaded_data['observable_flips']
-observable_flips = observable_flips[0:10000000,:,:]
+observable_flips = observable_flips[0:10000,:,:]
 
 
 ################################################################################################################
