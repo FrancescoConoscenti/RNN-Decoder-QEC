@@ -222,7 +222,7 @@ def train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs, batch_s
 
 from joblib import Parallel, delayed
 
-def process_batch(batch_x, batch_y,i, model, criterion, rounds):
+def process_batch(batch_x, batch_y, model, criterion, rounds):
     # Forward pass
     outputs, hidden = model(batch_x, rounds)
     loss = criterion(outputs.squeeze(1), batch_y)
@@ -234,8 +234,6 @@ def process_batch(batch_x, batch_y,i, model, criterion, rounds):
     grads = [param.grad.clone() if param.grad is not None else torch.zeros_like(param)
              for param in model.parameters()]
     
-    print(i)
-    print("ff")
     
     # Reduce gradients over batch dimension
     #reduced_grads = [grad.sum(dim=0, keepdim=True) if len(grad.shape) > 1 else grad 
@@ -263,7 +261,7 @@ def train_rnn_parallel(model,  X_train, y_train, criterion, optimizer,  num_epoc
 
     
         #results = [process_batch(batch_x, batch_y,i, model, criterion, rounds) for i, (batch_x, batch_y) in enumerate(batches)]
-        results = Parallel(n_jobs=n_jobs)(delayed(process_batch)(batch_x, batch_y,i,  model, criterion, rounds)for i, (batch_x, batch_y) in enumerate(batches))   
+        results = Parallel(n_jobs=n_jobs)(delayed(process_batch)(batch_x, batch_y,  model, criterion, rounds)for batch_x, batch_y in batches)   
         
         
         # Aggregate results
