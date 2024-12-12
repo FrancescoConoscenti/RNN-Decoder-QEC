@@ -44,7 +44,7 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
-num_batch_parallel = 2*16*1024/0.8
+num_batch_parallel = 2*16*1024//0.8
 
 # Load the compressed data
 loaded_data = np.load('data_stim/google_r11.npz')
