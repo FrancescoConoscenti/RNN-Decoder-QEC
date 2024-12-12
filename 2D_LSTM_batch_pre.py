@@ -45,7 +45,7 @@ detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits
 
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
-num_shots = int(95*16*1024/0.8) #num shot multiple of batch size and of number of process
+num_shots = int(50*16*1024/0.8) #num shot multiple of batch size and of number of process
 
 # Load the compressed data
 loaded_data = np.load('data_stim/google_r5.npz')
