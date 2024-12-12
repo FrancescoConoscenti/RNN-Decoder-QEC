@@ -44,7 +44,8 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
-num_shots = int(200*16*1024/0.8) #num shot multiple of batch size and of number of process
+#num_shots = int(200*16*1024/0.8) #num shot multiple of batch size and of number of process
+num_shots = 2000000-1
 
 # Load the compressed data
 loaded_data = np.load('data_stim/google_r5.npz')
@@ -445,8 +446,8 @@ test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
 # Training the model
-#train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
-train_rnn_parallel(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds,n_jobs)
+train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
+#train_rnn_parallel(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds,n_jobs)
 
 test(model, X_test, y_test,batch_size)
 
