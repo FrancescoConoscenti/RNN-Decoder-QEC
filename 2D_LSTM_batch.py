@@ -44,9 +44,14 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
+num_shots = int(200*16*1024/0.8) #num shot multiple of batch size and of number of process
+
+# Load the compressed data
 loaded_data = np.load('data_stim/google_r5.npz')
 detection_array1 = loaded_data['detection_array1']
+detection_array1 = detection_array1[0:num_shots,:,:]
 observable_flips = loaded_data['observable_flips']
+observable_flips = observable_flips[0:num_shots]
 
 ############################################################################################################
 
@@ -420,7 +425,7 @@ grid_height = 4  # Number of rows in the grid
 grid_width = 2   # Number of columns in the grid
 learning_rate = 0.001
 num_epochs = 20
-batch_size = 512
+batch_size = 1024
 layers_sizes=[hidden_size*3,hidden_size*2,hidden_size ]
 n_jobs = 16
 
@@ -440,7 +445,9 @@ test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
 # Training the model
-train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
+#train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
 train_rnn_parallel(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds,n_jobs)
 
 test(model, X_test, y_test,batch_size)
+
+torch.save(model.state_dict(), "2D_LSTM_r5.pth")
