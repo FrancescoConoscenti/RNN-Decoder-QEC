@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 distance=3
-rounds=17
+rounds=11
 
 if distance ==3:
     num_qubits=17
@@ -44,12 +44,14 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
+num_batch_parallel = 2*16*1024/0.8
+
 # Load the compressed data
-loaded_data = np.load('data_stim/google_r17.npz')
+loaded_data = np.load('data_stim/google_r11.npz')
 detection_array1 = loaded_data['detection_array1']
-detection_array1 = detection_array1[0:20480,:,:]
+detection_array1 = detection_array1[0:num_batch_parallel,:,:]
 observable_flips = loaded_data['observable_flips']
-observable_flips = observable_flips[0:20480]
+observable_flips = observable_flips[0:num_batch_parallel]
 
 
 ################################################################################################################
