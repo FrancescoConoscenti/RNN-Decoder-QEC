@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 distance=3
-rounds=11
+rounds=17
 
 if distance ==3:
     num_qubits=17
@@ -46,7 +46,7 @@ observable_flips = observable_flips.astype(int).flatten().tolist()"""
 num_shots = int(200*16*1024/0.8) #num shot multiple of batch size and of number of process
 
 # Load the compressed data
-loaded_data = np.load('data_stim/google_r11.npz')
+loaded_data = np.load('data_stim/google_r17.npz')
 detection_array1 = loaded_data['detection_array1']
 detection_array1 = detection_array1[0:num_shots,:,:]
 observable_flips = loaded_data['observable_flips']
