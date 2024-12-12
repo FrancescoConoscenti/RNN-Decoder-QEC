@@ -29,7 +29,6 @@ circuit_surface = stim.Circuit.generated(
 
 #############################################################################################################
 
-num_shots=10000
 """# Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
@@ -44,14 +43,14 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
-num_batch_parallel = int(2*16*1024/0.8)
+num_shots = int(200*16*1024/0.8) #num shot multiple of batch size and of number of process
 
 # Load the compressed data
 loaded_data = np.load('data_stim/google_r11.npz')
 detection_array1 = loaded_data['detection_array1']
-detection_array1 = detection_array1[0:num_batch_parallel,:,:]
+detection_array1 = detection_array1[0:num_shots,:,:]
 observable_flips = loaded_data['observable_flips']
-observable_flips = observable_flips[0:num_batch_parallel]
+observable_flips = observable_flips[0:num_shots]
 
 
 ################################################################################################################
