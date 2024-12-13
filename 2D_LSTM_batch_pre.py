@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 distance=3
-rounds=5
+rounds=11
 
 if distance ==3:
     num_qubits=17
@@ -45,10 +45,11 @@ detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits
 
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
-num_shots = int(50*16*1024/0.8) #num shot multiple of batch size and of number of process
+#num_shots = int(100*16*1024/0.8) #num shot multiple of batch size and of number of process
+num_shots = 2000000
 
 # Load the compressed data
-loaded_data = np.load('data_stim/google_r5.npz')
+loaded_data = np.load('data_stim/google_r11.npz')
 detection_array1 = loaded_data['detection_array1']
 detection_array1 = detection_array1[0:num_shots,:,:]
 observable_flips = loaded_data['observable_flips']
@@ -431,11 +432,11 @@ hidden_size = 128 # Hidden size of each RNN cell
 output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 4  # Number of rows in the grid
 grid_width = 2   # Number of columns in the grid
-learning_rate = 0.001
+learning_rate = 0.0005
 num_epochs = 20
-batch_size = 512
+batch_size = 256
 layers_sizes=[hidden_size*3,hidden_size*2,hidden_size ]
-n_jobs=16
+#n_jobs=16
 
 print(f'2D LSTM_batch pre')
 print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, batch_size = {batch_size}, hidden_size = {hidden_size}, batch_size = {batch_size}, layers_sizes={layers_sizes},  learning_rate={learning_rate}, num_epochs={num_epochs}')
@@ -454,12 +455,12 @@ test_dataset_size=num_shots*test_size
 X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable_flips, test_size=0.2, random_state=42, shuffle=False)
 
 # Training the model
-#train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
-train_rnn_parallel(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds, n_jobs)
+train_rnn(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds)
+#train_rnn_parallel(model, X_train, y_train, criterion, optimizer, num_epochs,batch_size,rounds, n_jobs)
 
 test(model, X_test, y_test,batch_size)
 
-torch.save(model.state_dict(), "2D_LSTM_pre_r5.pth")
+torch.save(model.state_dict(), "2D_LSTM_pre_r11.pth")
 
 #############################################################################################################
 
