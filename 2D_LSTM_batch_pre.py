@@ -46,7 +46,7 @@ detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits
 observable_flips = observable_flips.astype(int).flatten().tolist()"""
 
 #num_shots = int(100*16*1024/0.8) #num shot multiple of batch size and of number of process
-num_shots = 2000000
+num_shots = 1000000
 
 # Load the compressed data
 loaded_data = np.load('data_stim/google_r11.npz')
