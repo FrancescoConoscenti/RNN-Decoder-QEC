@@ -29,8 +29,10 @@ circuit_surface = stim.Circuit.generated(
 
 ##################################################################################################à
 
-#num_shots=2000000 #batch size multiple
-"""# Compile the sampler
+num_shots = 300
+
+
+# Compile the sampler
 sampler = circuit_surface.compile_detector_sampler()
 # Sample shots, with observables
 detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
@@ -43,17 +45,17 @@ detection_array = np.array(detection_events_numeric) # Convert detection_events 
 
 detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
 
-observable_flips = observable_flips.astype(int).flatten().tolist()"""
+observable_flips = observable_flips.astype(int).flatten().tolist()
 
 #num_shots = int(100*16*1024/0.8) #num shot multiple of batch size and of number of process
-num_shots = 1000000
 
+"""
 # Load the compressed data
 loaded_data = np.load('data_stim/google_r11.npz')
 detection_array1 = loaded_data['detection_array1']
 detection_array1 = detection_array1[0:num_shots,:,:]
 observable_flips = loaded_data['observable_flips']
-observable_flips = observable_flips[0:num_shots]
+observable_flips = observable_flips[0:num_shots]"""
 
 ############################################################################################################
 
@@ -432,8 +434,8 @@ hidden_size = 128 # Hidden size of each RNN cell
 output_size = 1  # Binary output (e.g., 0 or 1)
 grid_height = 4  # Number of rows in the grid
 grid_width = 2   # Number of columns in the grid
-learning_rate = 0.0005
-num_epochs = 20
+learning_rate = 0.005
+num_epochs = 2
 batch_size = 256
 layers_sizes=[hidden_size*3,hidden_size*2,hidden_size ]
 #n_jobs=16
