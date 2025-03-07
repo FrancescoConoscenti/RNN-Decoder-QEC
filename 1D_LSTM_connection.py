@@ -1,4 +1,5 @@
 import stim
+import os
 import numpy as np
 import torch
 import torch.nn as nn
@@ -6,6 +7,8 @@ import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 import torch.multiprocessing as mp
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -283,7 +286,16 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test
 
-def train_model(model, train_loader, criterion, optimizer, num_epochs, num_rounds):
+def setup(rank, world_size):
+    os.environ["MASTER_ADDR"] = "localhost"  # Use SLURM settings if on a cluster
+    os.environ["MASTER_PORT"] = "12355"
+    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+
+def cleanup():
+    dist.destroy_process_group()
+
+
+def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num_rounds, world_size):
     """
     Train the model
     
@@ -300,10 +312,12 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
         model: Trained model
         losses: List of losses per epoch
     """
-    # Move model to shared memory so all processes access the same parameters
-    model.share_memory()
 
-    model.train()
+    setup(rank, world_size)
+
+    model = model().to(rank)
+    model = DDP(model, device_ids=[rank])
+
     losses = []
     
     for epoch in range(num_epochs):
@@ -331,6 +345,9 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
     
     print("Training finished.")
+
+    cleanup()
+
     return model, losses
 
 
@@ -339,6 +356,11 @@ def train_parallel(model, train_loader, criterion, optimizer, num_epochs, num_ro
     """
     Launch multiple processes to train the model in parallel.
     """
+
+    # Move model to shared memory so all processes access the same parameters
+    model.share_memory()
+    model.train()
+
     world_size = mp.cpu_count()  # Number of available CPU cores
     mp.spawn(train_model, args=(world_size, model, train_loader, criterion, optimizer, num_epochs, num_rounds), nprocs=world_size)
 
@@ -409,113 +431,136 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
+if __name__ == "__main__":
+    mp.set_start_method("spawn", force=True)  # Ensure safe multiprocessing
+        
+    # Configuration parameters
+    distance = 3
+    rounds = 11
+    num_shots = 1000
 
-# Configuration parameters
-distance = 3
-rounds = 11
-num_shots = 1000
-
-# Determine system size based on distance
-if distance == 3:
-    num_qubits = 17
-    num_data_qubits = 9
-    num_ancilla_qubits = 8
-elif distance == 5:
-    num_qubits = 49
-    num_data_qubits = 25
-    num_ancilla_qubits = 24
-
-
-"""
-path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
-circuit_google = stim.Circuit.from_file(path)
-
-# Compile the sampler
-sampler = circuit_google.compile_detector_sampler()
-# Sample shots, with observables
-detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
-
-detection_events = detection_events.astype(int)
-detection_strings = [''.join(map(str, row)) for row in detection_events] #compress the detection events in a tensor
-detection_events_numeric = [[int(value) for value in row] for row in detection_events] # Convert string elements to integers (or floats if needed)
-detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
-detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
-order = [0,3,5,6,7,4,2,1]# Reorder using advanced indexing to create the chain connectivity
-detection_array_ordered = detection_array1[..., order]
-
-observable_flips = observable_flips.astype(int).flatten().tolist()
-
-# Save with compression
-np.savez_compressed('data_stim/google_r5.npz', detection_array_ordered = detection_array_ordered, observable_flips=observable_flips)
-"""
-"""# Load data
-data_path = 'data_stim/google_r5.npz'
-detection_array, observable_flips = load_data(data_path, num_shots)"""
-
-#Load data form compressed file .npz
-detection_array1, observable_flips = load_data(num_shots)
-
-# Reorder using advanced indexing to create the chain connectivity
-order = [0,3,5,6,7,4,2,1]
-detection_array_ordered = detection_array1[..., order]
-
-# Model hyperparameters
-input_size = 1
-hidden_size = 128
-output_size = 1
-chain_length = num_ancilla_qubits
-batch_size = 64
-test_size = 0.2
-learning_rate = 0.005
-num_epochs = 1
-fc_layers = [hidden_size*3, hidden_size*2, hidden_size]
-
-# Print configuration
-print(f"2D LSTM connection")
-print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
-print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
-print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
-
-# Create data loaders
-train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
-detection_array_ordered, observable_flips, batch_size, test_size
-)
-
-# Create model
-model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
-
-# Define loss function and optimizer
-criterion = nn.BCELoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-# Train model
-model, losses = train_parallel(model, train_loader, criterion, optimizer, num_epochs, rounds)
-
-# Evaluate model
-accuracy, predictions = evaluate_model(model, test_loader, rounds)
-
-# Save model
-#torch.save(model.state_dict(), "2D_LSTM_r11.pth")
-#print(f"Model saved to 2D_LSTM_r11.pth")
+    # Determine system size based on distance
+    if distance == 3:
+        num_qubits = 17
+        num_data_qubits = 9
+        num_ancilla_qubits = 8
+    elif distance == 5:
+        num_qubits = 49
+        num_data_qubits = 25
+        num_ancilla_qubits = 24
 
 
+    """
+    path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
+    circuit_google = stim.Circuit.from_file(path)
 
-"""
-# Function to train the model in parallel
+    # Compile the sampler
+    sampler = circuit_google.compile_detector_sampler()
+    # Sample shots, with observables
+    detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
+
+    detection_events = detection_events.astype(int)
+    detection_strings = [''.join(map(str, row)) for row in detection_events] #compress the detection events in a tensor
+    detection_events_numeric = [[int(value) for value in row] for row in detection_events] # Convert string elements to integers (or floats if needed)
+    detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
+    detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
+    order = [0,3,5,6,7,4,2,1]# Reorder using advanced indexing to create the chain connectivity
+    detection_array_ordered = detection_array1[..., order]
+
+    observable_flips = observable_flips.astype(int).flatten().tolist()
+
+    # Save with compression
+    np.savez_compressed('data_stim/google_r5.npz', detection_array_ordered = detection_array_ordered, observable_flips=observable_flips)
+    """
+    """# Load data
+    data_path = 'data_stim/google_r5.npz'
+    detection_array, observable_flips = load_data(data_path, num_shots)"""
+
+    #Load data form compressed file .npz
+    detection_array1, observable_flips = load_data(num_shots)
+
+    # Reorder using advanced indexing to create the chain connectivity
+    order = [0,3,5,6,7,4,2,1]
+    detection_array_ordered = detection_array1[..., order]
+
+    # Model hyperparameters
+    input_size = 1
+    hidden_size = 128
+    output_size = 1
+    chain_length = num_ancilla_qubits
+    batch_size = 64
+    test_size = 0.2
+    learning_rate = 0.005
+    num_epochs = 1
+    fc_layers = [hidden_size*3, hidden_size*2, hidden_size]
+
+    # Print configuration
+    print(f"2D LSTM connection")
+    print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
+    print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
+    print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
+
+    # Create data loaders
+    train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
+    detection_array_ordered, observable_flips, batch_size, test_size
+    )
+
+    # Create model
+    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
+
+    # Define loss function and optimizer
+    criterion = nn.BCELoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    # Train model
+    world_size = torch.cuda.device_count()
+    #model, losses = train_parallel(model, train_loader, criterion, optimizer, num_epochs, rounds)
+    mp.spawn(train_model, args=(world_size,model, train_loader, criterion, optimizer, num_epochs, rounds), nprocs=world_size,  join=True)
+
+    # Evaluate model
+    accuracy, predictions = evaluate_model(model, test_loader, rounds)
+
+    # Save model
+    #torch.save(model.state_dict(), "2D_LSTM_r11.pth")
+    #print(f"Model saved to 2D_LSTM_r11.pth")
+
+
+
+    """
+import os
+import torch
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+
+def setup(rank, world_size):
+    dist.init_process_group(
+        backend="nccl",  # Use NCCL for GPU-based communication
+        init_method="env://",  # Use environment variables for initialization
+        rank=rank,
+        world_size=world_size
+    )
+
+def cleanup():
+    dist.destroy_process_group()
+
 def train_model(rank, world_size, model, train_loader, criterion, optimizer, num_epochs, num_rounds):
-    
-    print(f"Process {rank} starting training...")
+   
+    setup(rank, world_size)
 
-    # Move model to shared memory so all processes access the same parameters
-    model.share_memory()
+    # Assign the model and data to the correct GPU
+    torch.cuda.set_device(rank)
+    model = model.to(rank)
+    model = DDP(model, device_ids=[rank])
 
-    model.train()
     losses = []
     
     for epoch in range(num_epochs):
         running_loss = 0.0
         
         for batch_x, batch_y in train_loader:
+            # Move data to the correct device
+            batch_x, batch_y = batch_x.to(rank), batch_y.to(rank)
+            
             # Zero gradients
             optimizer.zero_grad()
             
@@ -533,38 +578,18 @@ def train_model(rank, world_size, model, train_loader, criterion, optimizer, num
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
         
-        print(f"Process {rank}, Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+        if rank == 0:  # Only print from the main process
+            print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
     
-    print(f"Process {rank} finished training.")
-    return losses
+    if rank == 0:
+        print("Training finished.")
 
+    cleanup()
 
-# Multiprocessing wrapper for training
 def train_parallel(model, train_loader, criterion, optimizer, num_epochs, num_rounds):
     
-    world_size = torch.cpu_count()  # Number of available CPU cores
-    mp.spawn(train_model, args=(world_size, model, train_loader, criterion, optimizer, num_epochs, num_rounds), nprocs=world_size)
+    world_size = int(os.environ["WORLD_SIZE"])  # Total number of processes
+    rank = int(os.environ["RANK"])  # Rank of the current process
 
-
-# Example usage
-if __name__ == "__main__":
-    mp.set_start_method("spawn", force=True)  # Ensures safe multiprocessing
-    
-    # Example data (replace with actual data)
-    detection_array = np.random.rand(1000, 10)  # Example input data
-    observable_flips = np.random.rand(1000, 1)  # Example target data
-    batch_size = 32
-    num_epochs = 5
-    num_rounds = 10
-    
-    # Create DataLoaders with multiple workers
-    train_loader, test_loader, _, _, _, _ = create_data_loaders(detection_array, observable_flips, batch_size, num_workers=4)
-    
-    # Define model, loss function, optimizer
-    model = MyModel()  # Replace with your model
-    criterion = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    
-    # Train using multiple CPU cores
-    train_parallel(model, train_loader, criterion, optimizer, num_epochs, num_rounds)
-"""
+    train_model(rank, world_size, model, train_loader, criterion, optimizer, num_epochs, num_rounds)
+    """
