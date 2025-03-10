@@ -7,6 +7,8 @@ import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 import torch.multiprocessing as mp
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -122,7 +124,7 @@ class LatticeRNN(nn.Module):
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
             LatticeRNNCell(input_size, hidden_size, fc_layers, batch_size) 
-            for _ in range(self.chain_length)
+            for _ in range(chain_length)
         ])
         
         # Output layer
@@ -198,7 +200,6 @@ class BlockRNN(nn.Module):
         super(BlockRNN, self).__init__()
         self.hidden_size = hidden_size
         self.batch_size = batch_size
-        self.chain_length = chain_length
         
         # Input processing
         self.fc_in = nn.Linear(input_size, input_size)
@@ -226,7 +227,7 @@ class BlockRNN(nn.Module):
         c_ext = torch.zeros(batch_size, self.hidden_size, device=device)
         
         # Initialize grid states
-        chain_states = [(h_ext, c_ext) for _ in range(self.chain_length)] 
+        chain_states = [(h_ext, c_ext) for _ in range(chain_length)] 
             
         
         # Process each round
@@ -285,7 +286,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test
 
-def train_model(model, train_loader, criterion, optimizer, num_epochs, num_rounds, num_processes, rank, lock):
+def train_model(model, train_loader, criterion, optimizer, num_epochs, num_rounds):
     """
     Train the model
     
@@ -311,10 +312,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
     for epoch in range(num_epochs):
         running_loss = 0.0
         
-        for batch_idx, (batch_x, batch_y) in enumerate(train_loader):
-            # Process only batches assigned to this worker
-            if batch_idx % num_processes != rank:
-                continue
+        for batch_x, batch_y in train_loader:
             
             # Zero gradients
             optimizer.zero_grad()
@@ -323,10 +321,9 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             output, _ = model(batch_x, num_rounds)
             loss = criterion(output.squeeze(1), batch_y)
             
-            with lock:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+            # Backward pass and optimize
+            loss.backward()
+            optimizer.step()
             
             running_loss += loss.item()
         
@@ -413,8 +410,8 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 5
-    num_shots = 2000000
+    rounds = 11
+    num_shots = 1000
 
     # Determine system size based on distance
     if distance == 3:
@@ -470,7 +467,6 @@ if __name__ == "__main__":
     learning_rate = 0.005
     num_epochs = 1
     fc_layers = [hidden_size*3, hidden_size*2, hidden_size]
-    num_processes = 2
 
     # Print configuration
     print(f"2D LSTM connection")
@@ -480,11 +476,8 @@ if __name__ == "__main__":
 
     # Create data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
-    detection_array_ordered, observable_flips, batch_size, test_size)
-
-    # Create synchronization lock
-    manager = mp.Manager()
-    lock = manager.Lock()
+    detection_array_ordered, observable_flips, batch_size, test_size
+    )
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
@@ -492,22 +485,10 @@ if __name__ == "__main__":
     # Define loss function and optimizer
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    mp.set_start_method('spawn', force=True)
-
-    model.share_memory() # gradients are allocated lazily, so they are not shared here
-
-    processes = []
-    for rank in range(num_processes):
-        p = mp.Process(target=train_model, args=(model, train_loader, criterion, optimizer, num_epochs, rounds, num_processes, rank, lock))
-        # We first train the model across `num_processes` processes
-        p.start()
-        processes.append(p)
-    for p in processes:
-        p.join()
-
 
     # Train model
-    #model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds)
+    world_size = torch.cuda.device_count()
+    model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds)
     
     # Evaluate model
     accuracy, predictions = evaluate_model(model, test_loader, rounds)
