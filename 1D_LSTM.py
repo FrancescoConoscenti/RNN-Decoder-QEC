@@ -469,7 +469,7 @@ if __name__ == "__main__":
     fc_layers = [hidden_size*3, hidden_size*2, hidden_size]
 
     # Print configuration
-    print(f"2D LSTM connection")
+    print(f"1D LSTM")
     print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")

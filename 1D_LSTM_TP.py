@@ -320,10 +320,11 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             optimizer.zero_grad()
             
             # Forward pass
-            output, _ = model(batch_x, num_rounds)
-            loss = criterion(output.squeeze(1), batch_y)
-            
             with lock:
+                output, _ = model(batch_x, num_rounds)
+                loss = criterion(output.squeeze(1), batch_y)
+            
+            
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
@@ -473,7 +474,7 @@ if __name__ == "__main__":
     num_processes = 4
 
     # Print configuration
-    print(f"2D LSTM connection")
+    print(f"1D LSTM TP")
     print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
