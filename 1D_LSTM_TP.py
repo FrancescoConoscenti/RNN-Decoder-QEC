@@ -468,9 +468,9 @@ if __name__ == "__main__":
     batch_size = 64
     test_size = 0.2
     learning_rate = 0.005
-    num_epochs = 1
+    num_epochs = 10
     fc_layers = [hidden_size*3, hidden_size*2, hidden_size]
-    num_processes = 2
+    num_processes = 4
 
     # Print configuration
     print(f"2D LSTM connection")
