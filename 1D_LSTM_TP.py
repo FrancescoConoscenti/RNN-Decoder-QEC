@@ -7,6 +7,7 @@ import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 import torch.multiprocessing as mp
+import sys
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -58,6 +59,7 @@ class LatticeRNNCell(nn.Module):
         
         # LSTM cell for time dimension
         self.lstm_cell = nn.LSTMCell(input_size, hidden_size)
+        
         
     def forward(self, x, hidden_states):
         """
@@ -119,6 +121,7 @@ class LatticeRNN(nn.Module):
         self.batch_size = batch_size
         self.chain_length = length
         
+        
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
             LatticeRNNCell(input_size, hidden_size, fc_layers, batch_size) 
@@ -127,6 +130,7 @@ class LatticeRNN(nn.Module):
         
         # Output layer
         self.fc_out = nn.Linear(hidden_size, output_size)
+        self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, x, h_ext, c_ext, chain_states):
@@ -177,6 +181,7 @@ class LatticeRNN(nn.Module):
         
         # Generate output
         output = self.fc_out(final_h)
+        output = self.bn(output)
         output = self.sigmoid(output)
         
         return output, final_h, final_c, chain_states
@@ -321,14 +326,24 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             
             # Forward pass
             with lock:
+                #print(batch_x)
+                assert not torch.isnan(batch_x).any(), "Output contains NaN values!"
                 output, _ = model(batch_x, num_rounds)
+                assert not torch.isnan(output).any(), "Output contains NaN values!"
+                #print(output.squeeze(1))
                 loss = criterion(output.squeeze(1), batch_y)
             
             
                 optimizer.zero_grad()
                 loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 optimizer.step()
-            
+
+                for name, param in model.named_parameters():
+                    if param.grad is not None:
+                        assert not torch.isnan(param.grad).any(), f"Gradient for {name} contains NaN values!"
+
+
             running_loss += loss.item()
         
         # Calculate average loss for this epoch
@@ -468,10 +483,10 @@ if __name__ == "__main__":
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
-    learning_rate = 0.005
+    learning_rate = 0.002
     num_epochs = 10
     fc_layers = [hidden_size*3, hidden_size*2, hidden_size]
-    num_processes = 4
+    num_processes = 8
 
     # Print configuration
     print(f"1D LSTM TP")
@@ -499,7 +514,8 @@ if __name__ == "__main__":
 
     processes = []
     for rank in range(num_processes):
-        p = mp.Process(target=train_model, args=(model, train_loader, criterion, optimizer, num_epochs, rounds, num_processes, rank, lock))
+        p = mp.Process(target=train_model, args=(model, train_loader, criterion, optimizer, 
+                                                 num_epochs, rounds, num_processes, rank, lock))
         # We first train the model across `num_processes` processes
         p.start()
         processes.append(p)
