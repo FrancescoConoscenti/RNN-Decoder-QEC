@@ -9,6 +9,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import torch.multiprocessing as mp
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
+import sys
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -129,6 +130,7 @@ class LatticeRNN(nn.Module):
         
         # Output layer
         self.fc_out = nn.Linear(hidden_size, output_size)
+        self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, x, h_ext, c_ext, chain_states):
@@ -179,6 +181,7 @@ class LatticeRNN(nn.Module):
         
         # Generate output
         output = self.fc_out(final_h)
+        output = self.bn(output)
         output = self.sigmoid(output)
         
         return output, final_h, final_c, chain_states
@@ -325,6 +328,11 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             loss.backward()
             optimizer.step()
             
+            """for name, param in model.named_parameters():
+                if torch.isnan(param.grad).any():
+                    print(f"Gradient for {name} contains NaN values!")
+                    sys.exit(1)"""
+            
             running_loss += loss.item()
         
         # Calculate average loss for this epoch
@@ -411,7 +419,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 5
-    num_shots = 1000000
+    num_shots = 2000000
 
     # Determine system size based on distance
     if distance == 3:
@@ -462,7 +470,7 @@ if __name__ == "__main__":
     hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
-    batch_size = 64
+    batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
     num_epochs = 10
