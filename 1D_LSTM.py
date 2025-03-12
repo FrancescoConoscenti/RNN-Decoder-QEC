@@ -17,9 +17,7 @@ class FullyConnectedNN(nn.Module):
         
         layers = []
 
-        layers.append(nn.Linear(input_size, hidden_size))
-
-        """layers.append(nn.Linear(input_size, layers_sizes[0]))
+        layers.append(nn.Linear(input_size, layers_sizes[0]))
         
         # Define hidden layers
         for i in range(len(layers_sizes) - 1):
@@ -27,7 +25,7 @@ class FullyConnectedNN(nn.Module):
             layers.append(nn.ReLU())
         
         # Define output layer
-        layers.append(nn.Linear(layers_sizes[-1], hidden_size))"""
+        layers.append(nn.Linear(layers_sizes[-1], hidden_size))
 
         # Define activation function (e.g., ReLU)
         layers.append(nn.ReLU())
@@ -58,8 +56,10 @@ class LatticeRNNCell(nn.Module):
         
         # Process combined hidden states 
         # (precedent chain element and previous in time so input dim = hidden_size*2)
-        self.hidden_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
-        self.cell_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
+        #self.hidden_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
+        self.hidden_processor = nn.Linear(hidden_size*2,hidden_size)
+        #self.cell_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
+        self.cell_processor = nn.Linear(hidden_size*2,hidden_size)
         
         # LSTM cell for time dimension
         self.lstm_cell = nn.LSTMCell(input_size, hidden_size)
