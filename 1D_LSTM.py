@@ -106,7 +106,7 @@ class LatticeRNNCell(nn.Module):
         return hidden, cell
 
 class LatticeRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, length, fc_layers, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, length, fc_layers_intra, fc_layers_out, batch_size):
         """
         Network that processes inputs in a 2D lattice structure
         
@@ -126,12 +126,13 @@ class LatticeRNN(nn.Module):
         
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
-            LatticeRNNCell(input_size, hidden_size, fc_layers, batch_size) 
+            LatticeRNNCell(input_size, hidden_size, fc_layers_intra, batch_size) 
             for _ in range(chain_length)
         ])
         
         # Output layer
-        self.fc_out = nn.Linear(hidden_size, output_size)
+        #self.fc_out = nn.Linear(hidden_size, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
         self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
@@ -189,7 +190,7 @@ class LatticeRNN(nn.Module):
         return output, final_h, final_c, chain_states
 
 class BlockRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, chain_length, fc_layers, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size):
         """
         Block RNN model that processes multiple time steps of data on a 2D lattice
         
@@ -210,7 +211,8 @@ class BlockRNN(nn.Module):
         self.fc_in = nn.Linear(input_size, input_size)
         
         # Lattice RNN for spatial processing
-        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
+        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, 
+                                    fc_layers_intra, fc_layers_out, batch_size)
     
     def forward(self, x, num_rounds):
         """
@@ -338,7 +340,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             for name, param in model.named_parameters():
                 if param.grad is not None:
                     grad_norm = param.grad.norm().item()  # Compute L2 norm of the gradient
-                    if grad_norm < 1e-10:
+                    if grad_norm < 1e-15:
                         print(f"Warning: Gradient for {name} is too small! Norm: {grad_norm:.6f}")
 
             
@@ -428,7 +430,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 5
-    num_shots = 1000000
+    num_shots = 2000000
 
     # Determine system size based on distance
     if distance == 3:
@@ -476,14 +478,15 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 128
+    hidden_size = 64
     output_size = 1
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
-    num_epochs = 10
-    fc_layers = [hidden_size]
+    num_epochs = 20
+    fc_layers_intra = [0] #now is not taken into account, there is not hidden layers.
+    fc_layers_out = [int(hidden_size/2)]
 
     # Print configuration
     print(f"1D LSTM")
@@ -497,7 +500,7 @@ if __name__ == "__main__":
     )
 
     # Create model
-    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
+    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()

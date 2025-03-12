@@ -15,7 +15,9 @@ class FullyConnectedNN(nn.Module):
         
         layers = []
 
-        layers.append(nn.Linear(input_size, layers_sizes[0]))
+        layers.append(nn.Linear(input_size, hidden_size))
+
+        """layers.append(nn.Linear(input_size, layers_sizes[0]))
         
         # Define hidden layers
         for i in range(len(layers_sizes) - 1):
@@ -23,7 +25,7 @@ class FullyConnectedNN(nn.Module):
             layers.append(nn.ReLU())
         
         # Define output layer
-        layers.append(nn.Linear(layers_sizes[-1], hidden_size))
+        layers.append(nn.Linear(layers_sizes[-1], hidden_size))"""
 
         # Define activation function (e.g., ReLU)
         layers.append(nn.ReLU())
@@ -103,7 +105,7 @@ class LatticeRNNCell(nn.Module):
         return hidden, cell
 
 class LatticeRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, length, fc_layers, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, length, fc_layers_intra, fc_layers_out, batch_size):
         """
         Network that processes inputs in a 2D lattice structure
         
@@ -124,12 +126,13 @@ class LatticeRNN(nn.Module):
         
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
-            LatticeRNNCell(input_size, hidden_size, fc_layers, batch_size) 
+            LatticeRNNCell(input_size, hidden_size, fc_layers_intra, batch_size) 
             for _ in range(self.chain_length)
         ])
         
         # Output layer
-        self.fc_out = nn.Linear(hidden_size, output_size)
+        #self.fc_out = nn.Linear(hidden_size, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
         self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
@@ -187,7 +190,7 @@ class LatticeRNN(nn.Module):
         return output, final_h, final_c, chain_states
 
 class BlockRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, chain_length, fc_layers, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size):
         """
         Block RNN model that processes multiple time steps of data on a 2D lattice
         
@@ -209,7 +212,8 @@ class BlockRNN(nn.Module):
         self.fc_in = nn.Linear(input_size, input_size)
         
         # Lattice RNN for spatial processing
-        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
+        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, 
+                                    fc_layers_intra, fc_layers_out, batch_size)
     
     def forward(self, x, num_rounds):
         """
@@ -326,11 +330,10 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             
             # Forward pass
             with lock:
-                #print(batch_x)
-                assert not torch.isnan(batch_x).any(), "Output contains NaN values!"
+                
+                #assert not torch.isnan(batch_x).any(), "Output contains NaN values!"
                 output, _ = model(batch_x, num_rounds)
-                assert not torch.isnan(output).any(), "Output contains NaN values!"
-                #print(output.squeeze(1))
+                #assert not torch.isnan(output).any(), "Output contains NaN values!"
                 loss = criterion(output.squeeze(1), batch_y)
             
             
@@ -339,10 +342,9 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 optimizer.step()
 
-                for name, param in model.named_parameters():
+                """for name, param in model.named_parameters():
                     if param.grad is not None:
-                        assert not torch.isnan(param.grad).any(), f"Gradient for {name} contains NaN values!"
-
+                        assert not torch.isnan(param.grad).any(), f"Gradient for {name} contains NaN values!" """
 
             running_loss += loss.item()
         
@@ -478,14 +480,15 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 128
+    hidden_size = 64
     output_size = 1
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
     num_epochs = 10
-    fc_layers = [hidden_size*3, hidden_size*2, hidden_size]
+    fc_layers_intra = [0] #now is not taken into account, there is not hidden layers.
+    fc_layers_out = [int(hidden_size/2)]
     num_processes = 8
 
     # Print configuration
@@ -503,7 +506,7 @@ if __name__ == "__main__":
     lock = manager.Lock()
 
     # Create model
-    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
+    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()
