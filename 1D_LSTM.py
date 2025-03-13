@@ -10,6 +10,7 @@ import torch.multiprocessing as mp
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 import sys
+import time
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -337,11 +338,11 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
                     print(f"Gradient for {name} contains NaN values!")
                     sys.exit(1)"""
             
-            """for name, param in model.named_parameters():
+            for name, param in model.named_parameters():
                 if param.grad is not None:
                     grad_norm = param.grad.norm().item()  # Compute L2 norm of the gradient
                     if grad_norm < 1e-15:
-                        print(f"Warning: Gradient for {name} is too small! Norm: {grad_norm:.6f}")"""
+                        print(f"Warning: Gradient for {name} is too small! Norm: {grad_norm:.6f}")
             
             running_loss += loss.item()
         
@@ -483,7 +484,7 @@ if __name__ == "__main__":
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
-    num_epochs = 10
+    num_epochs = 5
     fc_layers_intra =[hidden_size]
     fc_layers_out = [0]
 
@@ -506,11 +507,15 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
     # Train model
-    world_size = torch.cuda.device_count()
+    start_time = time.time()
     model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds)
-    
+    end_time = time.time()
+
     # Evaluate model
     accuracy, predictions = evaluate_model(model, test_loader, rounds)
+
+    # Print execution time
+    print(f"Execution time: {end_time - start_time:.6f} seconds")
 
     # Save model
     #torch.save(model.state_dict(), "2D_LSTM_r11.pth")
