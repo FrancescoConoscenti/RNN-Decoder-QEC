@@ -337,12 +337,11 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
                     print(f"Gradient for {name} contains NaN values!")
                     sys.exit(1)"""
             
-            for name, param in model.named_parameters():
+            """for name, param in model.named_parameters():
                 if param.grad is not None:
                     grad_norm = param.grad.norm().item()  # Compute L2 norm of the gradient
                     if grad_norm < 1e-15:
-                        print(f"Warning: Gradient for {name} is too small! Norm: {grad_norm:.6f}")
-
+                        print(f"Warning: Gradient for {name} is too small! Norm: {grad_norm:.6f}")"""
             
             running_loss += loss.item()
         
