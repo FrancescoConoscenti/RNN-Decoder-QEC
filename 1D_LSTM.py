@@ -18,7 +18,9 @@ class FullyConnectedNN(nn.Module):
         
         layers = []
 
-        layers.append(nn.Linear(input_size, layers_sizes[0]))
+        layers.append(nn.Linear(input_size, hidden_size))
+
+        """layers.append(nn.Linear(input_size, layers_sizes[0]))
         
         # Define hidden layers
         for i in range(len(layers_sizes) - 1):
@@ -26,7 +28,7 @@ class FullyConnectedNN(nn.Module):
             layers.append(nn.ReLU())
         
         # Define output layer
-        layers.append(nn.Linear(layers_sizes[-1], hidden_size))
+        layers.append(nn.Linear(layers_sizes[-1], hidden_size))"""
 
         # Define activation function (e.g., ReLU)
         layers.append(nn.ReLU())
