@@ -56,10 +56,10 @@ class LatticeRNNCell(nn.Module):
         
         # Process combined hidden states 
         # (precedent chain element and previous in time so input dim = hidden_size*2)
-        #self.hidden_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
-        self.hidden_processor = nn.Linear(hidden_size*2,hidden_size)
-        #self.cell_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
-        self.cell_processor = nn.Linear(hidden_size*2,hidden_size)
+        self.hidden_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
+        #self.hidden_processor = nn.Linear(hidden_size*2,hidden_size)
+        self.cell_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
+        #self.cell_processor = nn.Linear(hidden_size*2,hidden_size)
         
         # LSTM cell for time dimension
         self.lstm_cell = nn.LSTMCell(input_size, hidden_size)
@@ -131,8 +131,8 @@ class LatticeRNN(nn.Module):
         ])
         
         # Output layer
-        #self.fc_out = nn.Linear(hidden_size, output_size)
-        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
+        self.fc_out = nn.Linear(hidden_size, output_size)
+        #self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
         self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
@@ -430,7 +430,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 5
-    num_shots = 2000000
+    num_shots = 1000000
 
     # Determine system size based on distance
     if distance == 3:
@@ -478,14 +478,14 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 64
+    hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
-    num_epochs = 20
-    fc_layers_intra = [0] #now is not taken into account, there is not hidden layers.
+    num_epochs = 10
+    fc_layers_intra =[hidden_size*3, hidden_size*2, hidden_size] #now is not taken into account, there is not hidden layers.
     fc_layers_out = [int(hidden_size/2)]
 
     # Print configuration
