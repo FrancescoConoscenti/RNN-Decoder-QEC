@@ -484,13 +484,13 @@ if __name__ == "__main__":
     test_size = 0.2
     learning_rate = 0.002
     num_epochs = 10
-    fc_layers_intra =[hidden_size*3, hidden_size*2, hidden_size] #now is not taken into account, there is not hidden layers.
-    fc_layers_out = [int(hidden_size/2)]
+    fc_layers_intra =[hidden_size]
+    fc_layers_out = [0]
 
     # Print configuration
     print(f"1D LSTM")
     print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
-    print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
+    print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}, fc_layers_intra = {fc_layers_intra}, fc_layers_out={fc_layers_out}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
     # Create data loaders
