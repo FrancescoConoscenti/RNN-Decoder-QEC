@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 import torch.multiprocessing as mp
 import sys
+import time
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -15,20 +16,21 @@ class FullyConnectedNN(nn.Module):
         
         layers = []
 
-        layers.append(nn.Linear(input_size, hidden_size))
-
-        """layers.append(nn.Linear(input_size, layers_sizes[0]))
-        
-        # Define hidden layers
-        for i in range(len(layers_sizes) - 1):
-            layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+        if layers_sizes == [0]:
+            layers.append(nn.Linear(input_size, hidden_size))
+            # Define activation function (e.g., ReLU)
             layers.append(nn.ReLU())
-        
-        # Define output layer
-        layers.append(nn.Linear(layers_sizes[-1], hidden_size))"""
 
-        # Define activation function (e.g., ReLU)
-        layers.append(nn.ReLU())
+        else:
+            layers.append(nn.Linear(input_size, layers_sizes[0]))
+            # Define hidden layers
+            for i in range(len(layers_sizes) - 1):
+                layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+                layers.append(nn.ReLU())
+            
+            # Define output layer
+            layers.append(nn.Linear(layers_sizes[-1], hidden_size))
+
 
         # Combined sequential model
         self.network = nn.Sequential(*layers)
@@ -329,20 +331,19 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             optimizer.zero_grad()
             
             # Forward pass
-            with lock:
+            #with lock:
                 
                 #assert not torch.isnan(batch_x).any(), "Output contains NaN values!"
-                output, _ = model(batch_x, num_rounds)
+            output, _ = model(batch_x, num_rounds)
                 #assert not torch.isnan(output).any(), "Output contains NaN values!"
-                loss = criterion(output.squeeze(1), batch_y)
+            loss = criterion(output.squeeze(1), batch_y)
             
-            
+            with lock:
                 optimizer.zero_grad()
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
                 optimizer.step()
 
-                """for name, param in model.named_parameters():
+            """for name, param in model.named_parameters():
                     if param.grad is not None:
                         assert not torch.isnan(param.grad).any(), f"Gradient for {name} contains NaN values!" """
 
@@ -432,7 +433,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 5
-    num_shots = 2000000
+    num_shots = 1000000
 
     # Determine system size based on distance
     if distance == 3:
@@ -480,15 +481,15 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 64
+    hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
-    num_epochs = 10
+    num_epochs = 5
     fc_layers_intra = [0] #now is not taken into account, there is not hidden layers.
-    fc_layers_out = [int(hidden_size/2)]
+    fc_layers_out = [int(hidden_size/4)]
     num_processes = 8
 
     # Print configuration
@@ -515,6 +516,8 @@ if __name__ == "__main__":
 
     model.share_memory() # gradients are allocated lazily, so they are not shared here
 
+    start_time = time.time()
+
     processes = []
     for rank in range(num_processes):
         p = mp.Process(target=train_model, args=(model, train_loader, criterion, optimizer, 
@@ -525,12 +528,14 @@ if __name__ == "__main__":
     for p in processes:
         p.join()
 
+    end_time = time.time()
 
-    # Train model
-    #model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds)
     
     # Evaluate model
     accuracy, predictions = evaluate_model(model, test_loader, rounds)
+
+    # Print execution time
+    print(f"Execution time: {end_time - start_time:.6f} seconds")
 
     # Save model
     #torch.save(model.state_dict(), "2D_LSTM_r11.pth")
