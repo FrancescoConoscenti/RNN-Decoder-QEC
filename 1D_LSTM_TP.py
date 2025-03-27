@@ -338,10 +338,10 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
                 #assert not torch.isnan(output).any(), "Output contains NaN values!"
             loss = criterion(output.squeeze(1), batch_y)
             
-            with lock:
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+            #with lock: # I have to lock here so no other processors access the gradients 
+            optimizer.zero_grad() #initialize gradient to zero
+            loss.backward() # do bacward
+            optimizer.step() # Update the weigths
 
             """for name, param in model.named_parameters():
                     if param.grad is not None:
