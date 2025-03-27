@@ -485,6 +485,7 @@ if __name__ == "__main__":
     distance = 3
     rounds = 5
     num_shots = 500000
+    FineTune = False
 
     # Determine system size based on distance
     if distance == 3:
@@ -525,14 +526,16 @@ if __name__ == "__main__":
 
     #Load data form compressed file .npz
     detection_array1, observable_flips = load_data(num_shots)
-
-    #Load data form experimental .b8 file
-    detection_array_exp, observable_flips_exp = load_data_exp()
-
+    
     # Reorder using advanced indexing to create the chain connectivity
     order = [0,3,5,6,7,4,2,1]
     detection_array_ordered = detection_array1[..., order]
-    detection_array_ordered_exp = detection_array_exp[..., order]
+
+    #Load data form experimental .b8 file
+    if FineTune:
+        detection_array_exp, observable_flips_exp = load_data_exp()
+        detection_array_ordered_exp = detection_array_exp[..., order]
+    
 
     # Model hyperparameters
     input_size = 1
@@ -543,7 +546,6 @@ if __name__ == "__main__":
     test_size = 0.2
     learning_rate = 0.002
     num_epochs = 1
-    FineTune = False
     num_epochs_finetune = 1
     fc_layers_intra =[0]
     fc_layers_out = [int(hidden_size/8)]
