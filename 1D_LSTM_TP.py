@@ -526,8 +526,7 @@ if __name__ == "__main__":
         # We first train the model across `num_processes` processes
         p.start()
         processes.append(p)
-    for p in processes:
-        p.join()
+    
 
     end_time = time.time()
 
