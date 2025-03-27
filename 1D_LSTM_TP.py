@@ -490,7 +490,7 @@ if __name__ == "__main__":
     num_epochs = 1
     fc_layers_intra = [0] #now is not taken into account, there is not hidden layers.
     fc_layers_out = [int(hidden_size/8)]
-    num_processes = 1
+    num_processes = 2
 
     # Print configuration
     print(f"1D LSTM TP")
