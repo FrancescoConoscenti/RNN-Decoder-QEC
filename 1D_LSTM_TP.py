@@ -433,7 +433,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 5
-    num_shots = 1000000
+    num_shots = 100000
 
     # Determine system size based on distance
     if distance == 3:
@@ -487,9 +487,9 @@ if __name__ == "__main__":
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
-    num_epochs = 5
+    num_epochs = 1
     fc_layers_intra = [0] #now is not taken into account, there is not hidden layers.
-    fc_layers_out = [int(hidden_size/4)]
+    fc_layers_out = [int(hidden_size/8)]
     num_processes = 8
 
     # Print configuration

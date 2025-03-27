@@ -11,6 +11,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 import sys
 import time
+from typing import List
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -18,20 +19,21 @@ class FullyConnectedNN(nn.Module):
         
         layers = []
 
-        layers.append(nn.Linear(input_size, hidden_size))
-
-        """layers.append(nn.Linear(input_size, layers_sizes[0]))
-        
-        # Define hidden layers
-        for i in range(len(layers_sizes) - 1):
-            layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+        if layers_sizes == [0]:
+            layers.append(nn.Linear(input_size, hidden_size))
+            # Define activation function (e.g., ReLU)
             layers.append(nn.ReLU())
-        
-        # Define output layer
-        layers.append(nn.Linear(layers_sizes[-1], hidden_size))"""
 
-        # Define activation function (e.g., ReLU)
-        layers.append(nn.ReLU())
+        else:
+            layers.append(nn.Linear(input_size, layers_sizes[0]))
+            # Define hidden layers
+            for i in range(len(layers_sizes) - 1):
+                layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+                layers.append(nn.ReLU())
+            
+            # Define output layer
+            layers.append(nn.Linear(layers_sizes[-1], hidden_size))
+
 
         # Combined sequential model
         self.network = nn.Sequential(*layers)
@@ -60,9 +62,7 @@ class LatticeRNNCell(nn.Module):
         # Process combined hidden states 
         # (precedent chain element and previous in time so input dim = hidden_size*2)
         self.hidden_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
-        #self.hidden_processor = nn.Linear(hidden_size*2,hidden_size)
         self.cell_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
-        #self.cell_processor = nn.Linear(hidden_size*2,hidden_size)
         
         # LSTM cell for time dimension
         self.lstm_cell = nn.LSTMCell(input_size, hidden_size)
@@ -134,8 +134,8 @@ class LatticeRNN(nn.Module):
         ])
         
         # Output layer
-        self.fc_out = nn.Linear(hidden_size, output_size)
-        #self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
+        #self.fc_out = nn.Linear(hidden_size, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
         self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
@@ -273,16 +273,19 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
         detection_array, observable_flips, 
         test_size=test_size, shuffle=False
     )
-    
+     
+    if isinstance(detection_array ,  (np.ndarray, list)):
     # Convert to PyTorch tensors
-    X_train_tensor = torch.from_numpy(X_train).float()
-    X_test_tensor = torch.from_numpy(X_test).float()
-    y_train_tensor = torch.tensor(y_train).float()
-    y_test_tensor = torch.tensor(y_test).float()
+        X_train = torch.from_numpy(X_train).float()
+        X_test = torch.from_numpy(X_test).float()
+
+    if isinstance(observable_flips , (np.ndarray, list)):
+        y_train = torch.tensor(y_train).float()
+        y_test = torch.tensor(y_test).float()
     
     # Create datasets
-    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
-    test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
+    train_dataset = TensorDataset(X_train, y_train)
+    test_dataset = TensorDataset(X_test, y_test)
     
     # Create data loaders
     train_loader = DataLoader(
@@ -340,12 +343,11 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
                     print(f"Gradient for {name} contains NaN values!")
                     sys.exit(1)"""
             
-            for name, param in model.named_parameters():
+            """for name, param in model.named_parameters():
                 if param.grad is not None:
                     grad_norm = param.grad.norm().item()  # Compute L2 norm of the gradient
                     if grad_norm < 1e-15:
-                        print(f"Warning: Gradient for {name} is too small! Norm: {grad_norm:.6f}")
-            
+                        print(f"Warning: Gradient for {name} is too small! Norm: {grad_norm:.6f}")"""
             running_loss += loss.item()
         
         # Calculate average loss for this epoch
@@ -427,12 +429,62 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
+def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
+    shots = []
+    bytes_per_shot = (bits_per_shot + 7) // 8
+    for offset in range(0, len(data), bytes_per_shot):
+        shot = []
+        for k in range(bits_per_shot):
+            byte = data[offset + k // 8]
+            bit = (byte >> (k % 8)) % 2 == 1
+            shot.append(bit)
+        shots.append(shot)
+    return shots
+
+def load_data_exp():
+
+    if rounds == 5:
+        path_detection = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\detection_events.b8"
+        path_obs = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\obs_flips_actual.01"
+
+    if rounds == 11:
+        path_detection = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r11_center_3_5\detection_events.b8"
+        path_obs = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r11_center_3_5\obs_flips_actual.01"
+
+    if rounds == 17:
+        path_detection = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r17_center_3_5\detection_events.b8"
+        path_obs = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r17_center_3_5\obs_flips_actual.01"
+
+    bits_per_shot_detection = rounds * 8
+
+    with open(path_detection, "rb") as file:
+        # Read the file content as bytes
+        data_detection = file.read()
+
+    with open(path_obs, "rb") as file:
+        # Read the file content as bytes
+        data_obs = file.read()
+
+    detection = parse_b8(data_detection,bits_per_shot_detection)
+    detection = torch.tensor(detection).reshape(50000,rounds, num_ancilla_qubits)
+
+    obs = data_obs.replace(b"\n", b"")
+    obs = list(obs)
+    obs = [x - 48 for x in obs]
+
+    return detection, obs
+
+
+
+
+
+
 if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
     rounds = 5
-    num_shots = 1000000
+    num_shots = 100000
 
     # Determine system size based on distance
     if distance == 3:
@@ -474,9 +526,13 @@ if __name__ == "__main__":
     #Load data form compressed file .npz
     detection_array1, observable_flips = load_data(num_shots)
 
+    #Load data form experimental .b8 file
+    detection_array_exp, observable_flips_exp = load_data_exp()
+
     # Reorder using advanced indexing to create the chain connectivity
     order = [0,3,5,6,7,4,2,1]
     detection_array_ordered = detection_array1[..., order]
+    detection_array_ordered_exp = detection_array_exp[..., order]
 
     # Model hyperparameters
     input_size = 1
@@ -486,9 +542,11 @@ if __name__ == "__main__":
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
-    num_epochs = 5
-    fc_layers_intra =[hidden_size]
-    fc_layers_out = [0]
+    num_epochs = 1
+    FineTune = False
+    num_epochs_finetune = 1
+    fc_layers_intra =[0]
+    fc_layers_out = [int(hidden_size/8)]
 
     # Print configuration
     print(f"1D LSTM")
@@ -498,8 +556,11 @@ if __name__ == "__main__":
 
     # Create data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
-    detection_array_ordered, observable_flips, batch_size, test_size
-    )
+    detection_array_ordered, observable_flips, batch_size, test_size)
+
+    # Create data loaders
+    train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
+    detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
@@ -513,8 +574,15 @@ if __name__ == "__main__":
     model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds)
     end_time = time.time()
 
+    #Finetune
+    if FineTune:
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate/10)
+        model, losses = train_model(model, train_loader_exp, criterion, optimizer, num_epochs_finetune, rounds)
+
     # Evaluate model
     accuracy, predictions = evaluate_model(model, test_loader, rounds)
+    if FineTune:
+        accuracy, predictions = evaluate_model(model, test_loader_exp, rounds)
 
     # Print execution time
     print(f"Execution time: {end_time - start_time:.6f} seconds")
