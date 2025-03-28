@@ -492,7 +492,7 @@ if __name__ == "__main__":
     num_epochs = 1
     fc_layers_intra = [0] #now is not taken into account, there is not hidden layers.
     fc_layers_out = [int(hidden_size/8)]
-    num_processes = 2
+    num_processes = 1
 
     # Print configuration
     print(f"1D LSTM TP")
@@ -502,7 +502,7 @@ if __name__ == "__main__":
     print(f"num_processes = {num_processes}")
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
+
     # Create data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
     detection_array_ordered, observable_flips, batch_size, test_size)
