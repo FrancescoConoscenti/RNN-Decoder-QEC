@@ -1,0 +1,11 @@
+1D LSTM TP
+Configuration: rounds=5, distance=3, num_shots=100000
+Model parameters: hidden_size=128, batch_size=256
+Training parameters: learning_rate=0.002, num_epochs=1
+num_processes = 2
+Epoch [1/1], Loss: 0.3045
+Thread 0 training finished.
+Epoch [1/1], Loss: 0.2619
+Thread 1 training finished.
+Test Accuracy: 76.80%
+Execution time: 33.766751 seconds
