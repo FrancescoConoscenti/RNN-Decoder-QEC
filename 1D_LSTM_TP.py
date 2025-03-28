@@ -9,6 +9,7 @@ from torch.utils.data import TensorDataset, DataLoader
 import torch.multiprocessing as mp
 import sys
 import time
+import threading
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -316,7 +317,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
 
     
     model.train()
-
+    device = next(model.parameters()).device  # Get the device model is on
     losses = []
     
     for epoch in range(num_epochs):
@@ -326,6 +327,9 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             # Process only batches assigned to this worker
             if batch_idx % num_processes != rank:
                 continue
+
+            batch_x = batch_x.to(device)
+            batch_y = batch_y.to(device)
             
             # Zero gradients
             optimizer.zero_grad()
@@ -333,9 +337,9 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             # Forward pass
             #with lock:
                 
-                #assert not torch.isnan(batch_x).any(), "Output contains NaN values!"
+            #assert not torch.isnan(batch_x).any(), "Output contains NaN values!"
             output, _ = model(batch_x, num_rounds)
-                #assert not torch.isnan(output).any(), "Output contains NaN values!"
+            #assert not torch.isnan(output).any(), "Output contains NaN values!"
             loss = criterion(output.squeeze(1), batch_y)
             
             #with lock: # I have to lock here so no other processors access the gradients 
@@ -355,9 +359,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
         
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
     
-    print("Training finished.")
-
-
+    print(f"Thread {rank} training finished.")
     return model, losses
 
 
@@ -433,7 +435,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 5
-    num_shots = 500000
+    num_shots = 100000
 
     # Determine system size based on distance
     if distance == 3:
@@ -499,13 +501,16 @@ if __name__ == "__main__":
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
     print(f"num_processes = {num_processes}")
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     # Create data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
     detection_array_ordered, observable_flips, batch_size, test_size)
 
     # Create synchronization lock
     manager = mp.Manager()
-    lock = manager.Lock()
+    #lock = manager.Lock()
+    lock = threading.Lock()
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
@@ -520,12 +525,22 @@ if __name__ == "__main__":
     start_time = time.time()
 
     processes = []
+    threads = []
     for rank in range(num_processes):
-        p = mp.Process(target=train_model, args=(model, train_loader, criterion, optimizer, 
-                                                 num_epochs, rounds, num_processes, rank, lock))
+        #p = mp.Process(target=train_model, args=(model, train_loader, criterion, optimizer, 
+        #                                         num_epochs, rounds, num_processes, rank, lock))
+        thread = threading.Thread(target=train_model,
+                                  args=(model, train_loader, criterion, optimizer, 
+                                        num_epochs, rounds, num_processes, rank, lock)
+        )
         # We first train the model across `num_processes` processes
-        p.start()
-        processes.append(p)
+        #p.start()
+        #processes.append(p)
+        thread.start()
+        threads.append(thread)
+        
+        for thread in threads:
+            thread.join()
     
 
     end_time = time.time()
