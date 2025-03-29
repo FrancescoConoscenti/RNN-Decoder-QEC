@@ -17,7 +17,7 @@ def ddp_setup(rank, world_size):
     
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "12355"
-    torch.cuda.set_device(rank)
+    #torch.cuda.set_device(rank)
     init_process_group(backend="gloo", rank=rank, world_size=world_size)
 
 class Trainer:
@@ -105,7 +105,6 @@ if __name__ == "__main__":
     batch_size=16
 
     world_size = 4
-    print(world_size)
     mp.spawn(main, args=(world_size, save_every, total_epochs, batch_size), nprocs=world_size,join=True, daemon=False, start_method='spawn')
 
 """
