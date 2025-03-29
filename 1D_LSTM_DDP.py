@@ -303,7 +303,7 @@ def ddp_setup(rank, world_size):
     
 
 
-def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num_rounds):
+def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rounds):
     """
     Train the model
     
@@ -342,7 +342,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
             optimizer.zero_grad()
             
             # Forward pass
-            output, _ = model(batch_x, num_rounds)
+            output, _ = model(batch_x, rounds)
             loss = criterion(output.squeeze(1), batch_y)
             
             # Backward pass and optimize
