@@ -30,7 +30,7 @@ class Trainer:
         save_every: int,
     ) -> None:
         self.gpu_id = gpu_id
-        self.model = model.to(gpu_id)
+        self.model = model #.to(gpu_id)
         self.train_data = train_data
         self.optimizer = optimizer
         self.save_every = save_every
