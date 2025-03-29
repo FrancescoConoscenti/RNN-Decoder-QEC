@@ -526,7 +526,7 @@ if __name__ == "__main__":
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
-    world_size = torch.cuda.device_count()
+    world_size = 4 #torch.cuda.device_count()
 
     # Train model
     #model, losses = train_parallel(model, train_loader, criterion, optimizer, num_epochs, rounds)
