@@ -39,7 +39,7 @@ class Trainer:
     def _run_batch(self, source, targets):
         self.optimizer.zero_grad()
         output = self.model(source)
-        loss = F.mse_entropy(output, targets)
+        loss = F.cross_entropy(output, targets)
         loss.backward()
         self.optimizer.step()
 
