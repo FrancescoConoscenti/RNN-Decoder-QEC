@@ -457,7 +457,7 @@ def main(rank, world_size: int, train_param, dataset, Net_Arch):
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    train_model(model, train_loader, criterion, optimizer, num_epochs, rounds)
+    train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rounds)
 
 
 
