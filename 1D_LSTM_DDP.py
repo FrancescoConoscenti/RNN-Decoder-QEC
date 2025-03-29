@@ -323,7 +323,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
     """
 
     #model = model()#.to(rank)
-    model = DDP(model) #, device_ids=[rank])
+    model = DDP(model, find_unused_parameters=True) #, device_ids=[rank])
 
     losses = []
     
