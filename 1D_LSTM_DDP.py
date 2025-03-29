@@ -438,9 +438,13 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
-def main(rank, world_size: int, num_epochs: int, batch_size: int):
+def main(rank, world_size: int, train_param, dataset, Net_Arch):
     
     ddp_setup(rank, world_size)
+
+    input_size, hidden_size, output_size, chain_length, fc_layers = train_param
+    detection_array_ordered, observable_flips, test_size = dataset
+    input_size, hidden_size, output_size, chain_length, fc_layers = Net_Arch
 
     # Create data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
@@ -530,7 +534,11 @@ if __name__ == "__main__":
 
     # Train model
     #model, losses = train_parallel(model, train_loader, criterion, optimizer, num_epochs, rounds)
-    mp.spawn(main, args=(world_size, num_epochs, rounds), nprocs=world_size,  join=True)
+    mp.spawn(main, args=(world_size,
+                        (num_epochs, rounds, learning_rate, batch_size),
+                        (detection_array_ordered, observable_flips, test_size),
+                        (input_size, hidden_size, output_size, chain_length, fc_layers,)),
+                        nprocs=world_size,  join=True)
 
     # Evaluate model
     #accuracy, predictions = evaluate_model(model, test_loader, rounds)
