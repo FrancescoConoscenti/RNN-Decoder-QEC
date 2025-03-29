@@ -442,7 +442,7 @@ def main(rank, world_size: int, train_param, dataset, Net_Arch):
     
     ddp_setup(rank, world_size)
 
-    input_size, hidden_size, output_size, chain_length, fc_layers = train_param
+    num_epochs, rounds, learning_rate, batch_size = train_param
     detection_array_ordered, observable_flips, test_size = dataset
     input_size, hidden_size, output_size, chain_length, fc_layers = Net_Arch
 
