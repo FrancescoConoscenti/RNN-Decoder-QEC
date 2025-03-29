@@ -39,7 +39,7 @@ class Trainer:
     def _run_batch(self, source, targets):
         self.optimizer.zero_grad()
         output = self.model(source)
-        loss = output.sum() # F.cross_entropy(output, targets)
+        loss = F.mse_entropy(output, targets)
         loss.backward()
         self.optimizer.step()
 
@@ -68,7 +68,7 @@ class Trainer:
 def load_train_objs():
     num_samples = 128
     input_size = 20
-    output_size = 1
+    output_size = 2
 
     inputs = torch.randn(num_samples, input_size)
     targets = torch.randint(0, output_size + 1, (num_samples,)) # Changed target creation
