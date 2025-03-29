@@ -303,7 +303,7 @@ def ddp_setup(rank, world_size):
     
 
 
-def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num_rounds, world_size):
+def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num_rounds):
     """
     Train the model
     
@@ -321,7 +321,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
         losses: List of losses per epoch
     """
 
-    model = model()#.to(rank)
+    #model = model()#.to(rank)
     model = DDP(model) #, device_ids=[rank])
 
     losses = []
@@ -457,7 +457,7 @@ def main(rank, world_size: int, train_param, dataset, Net_Arch):
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
-    train_model(model, train_loader, criterion, optimizer, num_epochs, rounds, world_size)
+    train_model(model, train_loader, criterion, optimizer, num_epochs, rounds)
 
 
 
