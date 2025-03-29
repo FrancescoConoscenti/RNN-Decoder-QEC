@@ -299,8 +299,8 @@ def ddp_setup(rank, world_size):
     #torch.cuda.set_device(rank)
     init_process_group(backend="gloo", rank=rank, world_size=world_size)
 
-def cleanup():
-    dist.destroy_process_group()
+
+    
 
 
 def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num_rounds, world_size):
@@ -320,8 +320,6 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
         model: Trained model
         losses: List of losses per epoch
     """
-
-    ddp_setup(rank, world_size)
 
     model = model()#.to(rank)
     model = DDP(model) #, device_ids=[rank])
@@ -368,7 +366,8 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
     
     print("Training finished.")
 
-    cleanup()
+
+    dist.destroy_process_group()
 
     return model, losses
 
@@ -439,6 +438,25 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
+def main(rank, world_size: int, num_epochs: int, batch_size: int):
+    
+    ddp_setup(rank, world_size)
+
+    # Create data loaders
+    train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
+    detection_array_ordered, observable_flips, batch_size, test_size)
+
+    # Create model
+    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
+
+    # Define loss function and optimizer
+    criterion = nn.BCELoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+
+    train_model(model, train_loader, criterion, optimizer, num_epochs, rounds, world_size)
+
+
+
 if __name__ == "__main__":
     mp.set_start_method("spawn", force=True)  # Ensure safe multiprocessing
         
@@ -508,25 +526,14 @@ if __name__ == "__main__":
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
-    # Create data loaders
-    train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
-    detection_array_ordered, observable_flips, batch_size, test_size
-    )
-
-    # Create model
-    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
-
-    # Define loss function and optimizer
-    criterion = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    world_size = torch.cuda.device_count()
 
     # Train model
-    world_size = torch.cuda.device_count()
     #model, losses = train_parallel(model, train_loader, criterion, optimizer, num_epochs, rounds)
-    mp.spawn(train_model, args=(world_size,model, train_loader, criterion, optimizer, num_epochs, rounds), nprocs=world_size,  join=True)
+    mp.spawn(main, args=(world_size, num_epochs, rounds), nprocs=world_size,  join=True)
 
     # Evaluate model
-    accuracy, predictions = evaluate_model(model, test_loader, rounds)
+    #accuracy, predictions = evaluate_model(model, test_loader, rounds)
 
     # Save model
     #torch.save(model.state_dict(), "2D_LSTM_r11.pth")
