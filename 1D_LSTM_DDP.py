@@ -126,7 +126,7 @@ class LatticeRNN(nn.Module):
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
             LatticeRNNCell(input_size, hidden_size, fc_layers, batch_size) 
-            for _ in range(chain_length)
+            for _ in range(self.chain_length)
         ])
         
         # Output layer
