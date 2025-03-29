@@ -11,6 +11,7 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data.distributed import DistributedSampler
+import time
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -460,6 +461,9 @@ def main(rank, world_size: int, train_param, dataset, Net_Arch):
 
     train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rounds)
 
+    # Evaluate model
+    accuracy, predictions = evaluate_model(model, test_loader, rounds)
+
 
 
 if __name__ == "__main__":
@@ -534,6 +538,8 @@ if __name__ == "__main__":
 
     world_size = 4 #torch.cuda.device_count()
 
+    start_time = time.time()
+
     # Train model
     #model, losses = train_parallel(model, train_loader, criterion, optimizer, num_epochs, rounds)
     mp.spawn(main, args=(world_size,
@@ -542,8 +548,10 @@ if __name__ == "__main__":
                         (input_size, hidden_size, output_size, chain_length, fc_layers,)),
                         nprocs=world_size,  join=True)
 
-    # Evaluate model
-    #accuracy, predictions = evaluate_model(model, test_loader, rounds)
+    end_time = time.time()
+
+    # Print execution time
+    print(f"Execution time: {end_time - start_time:.6f} seconds")
 
     # Save model
     #torch.save(model.state_dict(), "2D_LSTM_r11.pth")
