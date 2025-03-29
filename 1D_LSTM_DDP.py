@@ -202,6 +202,7 @@ class BlockRNN(nn.Module):
         super(BlockRNN, self).__init__()
         self.hidden_size = hidden_size
         self.batch_size = batch_size
+        self.chain_length = chain_length
         
         # Input processing
         self.fc_in = nn.Linear(input_size, input_size)
@@ -229,7 +230,7 @@ class BlockRNN(nn.Module):
         c_ext = torch.zeros(batch_size, self.hidden_size, device=device)
         
         # Initialize grid states
-        chain_states = [(h_ext, c_ext) for _ in range(chain_length)] 
+        chain_states = [(h_ext, c_ext) for _ in range(self.chain_length)] 
             
         
         # Process each round
