@@ -464,6 +464,7 @@ def main(rank, world_size: int, train_param, dataset, Net_Arch):
 
 if __name__ == "__main__":
     mp.set_start_method("spawn", force=True)  # Ensure safe multiprocessing
+    os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO' # Debug for unused gradients
         
     # Configuration parameters
     distance = 3
