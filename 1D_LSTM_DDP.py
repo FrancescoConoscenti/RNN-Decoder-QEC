@@ -473,7 +473,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 200
+    num_shots = 2000
 
     # Determine system size based on distance
     if distance == 3:
@@ -524,7 +524,7 @@ if __name__ == "__main__":
     hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
-    batch_size = 16
+    batch_size = 256
     test_size = 0.2
     learning_rate = 0.005
     num_epochs = 1
