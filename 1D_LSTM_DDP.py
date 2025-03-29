@@ -9,6 +9,8 @@ from torch.utils.data import TensorDataset, DataLoader
 import torch.multiprocessing as mp
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.distributed import init_process_group, destroy_process_group
+from torch.utils.data.distributed import DistributedSampler
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
@@ -276,20 +278,26 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     
     # Create data loaders
     train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=True
-    )
+        train_dataset, batch_size=batch_size, pin_memory=True,
+        shuffle=False, drop_last=True, sampler=DistributedSampler(train_dataset))
+    
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=False
-    )
+        shuffle=False, drop_last=False)
+    
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test
 
-def setup(rank, world_size):
-    os.environ["MASTER_ADDR"] = "localhost"  # Use SLURM settings if on a cluster
+def ddp_setup(rank, world_size):
+    
+    #Args:
+    #    rank: Unique identifier of each process
+    #    world_size: Total number of processes
+    
+    os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "12355"
-    dist.init_process_group("gloo", rank=rank, world_size=world_size)
+    #torch.cuda.set_device(rank)
+    init_process_group(backend="gloo", rank=rank, world_size=world_size)
 
 def cleanup():
     dist.destroy_process_group()
@@ -313,17 +321,24 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
         losses: List of losses per epoch
     """
 
-    setup(rank, world_size)
+    ddp_setup(rank, world_size)
 
-    model = model().to(rank)
-    model = DDP(model, device_ids=[rank])
+    model = model()#.to(rank)
+    model = DDP(model) #, device_ids=[rank])
 
     losses = []
     
     for epoch in range(num_epochs):
+        
+        print(f"[GPU{rank}] | Epoch {epoch} ")
+
         running_loss = 0.0
+        train_loader.sampler.set_epoch(epoch)
         
         for batch_x, batch_y in train_loader:
+
+            #batch_x = batch_x.to(rank)
+            #batch_y = batch_y.to(rank)
             
             # Zero gradients
             optimizer.zero_grad()
@@ -341,7 +356,14 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
         # Calculate average loss for this epoch
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
-        
+
+        if rank == 0:
+            ckp = model.module.state_dict()
+            PATH = "checkpoint.pt"
+            torch.save(ckp, PATH)
+            print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
+
+
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
     
     print("Training finished.")
@@ -349,20 +371,6 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
     cleanup()
 
     return model, losses
-
-
-# Multiprocessing wrapper for training
-def train_parallel(model, train_loader, criterion, optimizer, num_epochs, num_rounds):
-    """
-    Launch multiple processes to train the model in parallel.
-    """
-
-    # Move model to shared memory so all processes access the same parameters
-    model.share_memory()
-    model.train()
-
-    world_size = mp.cpu_count()  # Number of available CPU cores
-    mp.spawn(train_model, args=(world_size, model, train_loader, criterion, optimizer, num_epochs, num_rounds), nprocs=world_size)
 
 
 def evaluate_model(model, test_loader, num_rounds):
