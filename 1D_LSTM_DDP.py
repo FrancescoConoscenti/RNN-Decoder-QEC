@@ -473,7 +473,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 2000
+    num_shots = 200000
 
     # Determine system size based on distance
     if distance == 3:
