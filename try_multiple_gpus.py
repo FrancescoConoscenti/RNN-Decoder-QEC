@@ -1,4 +1,4 @@
-"""import torch
+import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 #from datautils import MyTrainDataset
@@ -104,25 +104,11 @@ if __name__ == "__main__":
     total_epochs=2
     batch_size=16
 
-    world_size = torch.cuda.device_count()
+    world_size = 4
     print(world_size)
     mp.spawn(main, args=(world_size, save_every, total_epochs, batch_size), nprocs=world_size,join=True, daemon=False, start_method='spawn')
-"""
 
 """
-
-import torch.multiprocessing as mp
-
-def f(rank, arg):
-    print(f"Process {rank}: Hello World (arg={arg})")
-
-if __name__ == '__main__':
-    mp.set_start_method('spawn', force=True)  # Force Colab-compatible start method
-    x = 1
-    mp.spawn(f, args=(x,), nprocs=1, join=True)
-    
-"""
-
 import os
 import torch
 import torch.distributed as dist
@@ -155,3 +141,4 @@ def train(rank, world_size):
 if __name__ == "__main__":
     world_size = 4  # Number of CPU processes
     mp.spawn(train, args=(world_size,), nprocs=world_size, join=True)
+"""
