@@ -48,8 +48,8 @@ class Trainer:
         print(f"[GPU{self.gpu_id}] Epoch {epoch} | Batchsize: {b_sz} | Steps: {len(self.train_data)}")
         self.train_data.sampler.set_epoch(epoch)
         for source, targets in self.train_data:
-            source = source.to(self.gpu_id)
-            targets = targets.to(self.gpu_id)
+            #source = source.to(self.gpu_id)
+            #targets = targets.to(self.gpu_id)
             self._run_batch(source, targets)
 
     def _save_checkpoint(self, epoch):
