@@ -68,10 +68,10 @@ class Trainer:
 def load_train_objs():
     num_samples = 128
     input_size = 20
-    output_size = 2
+    output_size = 1
 
     inputs = torch.randn(num_samples, input_size)
-    targets = torch.randint(0, output_size + 1, (num_samples,)) # Changed target creation
+    targets = torch.randint(0, output_size, (num_samples,)) # Changed target creation
 
     train_set = TensorDataset(inputs, targets)  # load your dataset
     model = torch.nn.Linear(20, 1)  # load your model
