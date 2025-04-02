@@ -542,7 +542,7 @@ if __name__ == "__main__":
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
-    world_size = 4 #torch.cuda.device_count()
+    world_size = 8 #torch.cuda.device_count()
 
     start_time = time.time()
 
