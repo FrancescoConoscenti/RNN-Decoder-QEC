@@ -463,10 +463,7 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
-def main(train_param, dataset, Net_Arch):
-
-    rank = int(os.environ["RANK"])
-    world_size = int(os.environ["WORLD_SIZE"])
+def main(rank, train_param, dataset, Net_Arch, world_size):
     
     ddp_setup(rank, world_size)
 
