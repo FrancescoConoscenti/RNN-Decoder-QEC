@@ -267,6 +267,11 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
         y_train: Training labels
         y_test: Testing labels
     """
+
+    # Initialize DDP first (call this before creating loaders)
+    rank = int(os.environ.get("RANK", 0))
+    world_size = int(os.environ.get("WORLD_SIZE", 1))
+
     # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(
         detection_array, observable_flips, 
@@ -284,13 +289,26 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
     
     # Create data loaders
+    train_sampler = DistributedSampler(
+        train_dataset,
+        num_replicas=world_size,
+        rank=rank,
+        shuffle=True  # Shuffle per epoch
+    ) if world_size > 1 else None
+    
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, pin_memory=True,
-        shuffle=False, drop_last=True, sampler=DistributedSampler(train_dataset))
+        shuffle=False, drop_last=True, sampler=train_sampler)
     
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, 
         shuffle=False, drop_last=False)
+    
+    #I test only on the data in the first process
+    if rank == 0:
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+    else:
+        test_loader = None
     
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test
@@ -301,13 +319,13 @@ def ddp_setup(rank, world_size):
     #    rank: Unique identifier of each process
     #    world_size: Total number of processes
     
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12355"
-    #torch.cuda.set_device(rank)
-    init_process_group(backend="gloo", rank=rank, world_size=world_size)
-
-
-    
+    rank = int(os.environ["RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
+    dist.init_process_group(
+        backend="gloo",  # or "nccl" for GPU
+        rank=rank,
+        world_size=world_size
+    )
 
 
 def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rounds):
