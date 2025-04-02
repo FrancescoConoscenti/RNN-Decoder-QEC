@@ -319,10 +319,10 @@ def ddp_setup(rank, world_size):
     #    rank: Unique identifier of each process
     #    world_size: Total number of processes
     
-    os.environ["MASTER_ADDR"] = "localhost"  # For single-node
+    os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "12355"
     dist.init_process_group(
-        backend="gloo",  # For CPU training
+        backend="gloo",  # Must use "gloo" for CPU
         rank=rank,
         world_size=world_size
     )
@@ -477,8 +477,8 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
-                     fc_layers_out, batch_size).to(rank)
-    ddp_model = DDP(model, device_ids=[rank] if torch.cuda.is_available() else None)
+                     fc_layers_out, batch_size)#. to(rank)
+    ddp_model = DDP(model) #, device_ids=[rank] if torch.cuda.is_available() else None)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()
