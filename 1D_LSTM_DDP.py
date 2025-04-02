@@ -463,7 +463,7 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
-def main(rank, train_param, dataset, Net_Arch):
+def main(rank, train_param, dataset, Net_Arch, world_size):
     
     ddp_setup(rank, world_size)
 
@@ -545,7 +545,8 @@ if __name__ == "__main__":
     #model, losses = train_parallel(model, train_loader, criterion, optimizer, num_epochs, rounds)
     mp.spawn(main, args=((num_epochs, rounds, learning_rate, batch_size),
                         (detection_array_ordered, observable_flips, test_size),
-                        (input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out)),
+                        (input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
+                         world_size),
                          nprocs=world_size,join=True)
 
     end_time = time.time()
