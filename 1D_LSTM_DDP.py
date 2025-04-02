@@ -479,7 +479,7 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
                      fc_layers_out, batch_size)#. to(rank)
-    ddp_model = DDP(model) #, device_ids=[rank] if torch.cuda.is_available() else None)
+    ddp_model = DDP(model,find_unused_parameters=True) #, device_ids=[rank] if torch.cuda.is_available() else None)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()
