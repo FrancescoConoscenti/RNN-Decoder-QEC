@@ -353,10 +353,11 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
     
     for epoch in range(num_epochs):
         
-        print(f"[GPU{rank}] | Epoch {epoch} ")
+        print(f"[CPU{rank}] | Epoch {epoch} ")
 
         running_loss = 0.0
-        train_loader.sampler.set_epoch(epoch)
+        if hasattr(train_loader.sampler, 'set_epoch'):
+            train_loader.sampler.set_epoch(epoch)
         
         for batch_x, batch_y in train_loader:
 
