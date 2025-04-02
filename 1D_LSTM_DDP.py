@@ -19,24 +19,28 @@ class FullyConnectedNN(nn.Module):
         
         layers = []
 
-        layers.append(nn.Linear(input_size, layers_sizes[0]))
-        
-        # Define hidden layers
-        for i in range(len(layers_sizes) - 1):
-            layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+        if layers_sizes == [0]:
+            layers.append(nn.Linear(input_size, hidden_size))
+            # Define activation function (e.g., ReLU)
             layers.append(nn.ReLU())
-        
-        # Define output layer
-        layers.append(nn.Linear(layers_sizes[-1], hidden_size))
 
-        # Define activation function (e.g., ReLU)
-        layers.append(nn.ReLU())
+        else:
+            layers.append(nn.Linear(input_size, layers_sizes[0]))
+            # Define hidden layers
+            for i in range(len(layers_sizes) - 1):
+                layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+                layers.append(nn.ReLU())
+            
+            # Define output layer
+            layers.append(nn.Linear(layers_sizes[-1], hidden_size))
+
 
         # Combined sequential model
         self.network = nn.Sequential(*layers)
 
     def forward(self, x):
         return self.network(x)
+
 
 class LatticeRNNCell(nn.Module):
     def __init__(self, input_size, hidden_size, fc_layers, batch_size):
@@ -106,7 +110,7 @@ class LatticeRNNCell(nn.Module):
         return hidden, cell
 
 class LatticeRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, length, fc_layers, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, length, fc_layers_intra, fc_layers_out, batch_size):
         """
         Network that processes inputs in a 2D lattice structure
         
@@ -126,12 +130,13 @@ class LatticeRNN(nn.Module):
         
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
-            LatticeRNNCell(input_size, hidden_size, fc_layers, batch_size) 
+            LatticeRNNCell(input_size, hidden_size, fc_layers_intra, batch_size) 
             for _ in range(self.chain_length)
         ])
         
         # Output layer
-        self.fc_out = nn.Linear(hidden_size, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
+        self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, x, h_ext, c_ext, chain_states):
@@ -187,7 +192,7 @@ class LatticeRNN(nn.Module):
         return output, final_h, final_c, chain_states
 
 class BlockRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, chain_length, fc_layers, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size):
         """
         Block RNN model that processes multiple time steps of data on a 2D lattice
         
@@ -209,7 +214,7 @@ class BlockRNN(nn.Module):
         self.fc_in = nn.Linear(input_size, input_size)
         
         # Lattice RNN for spatial processing
-        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
+        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra,fc_layers_out, batch_size)
     
     def forward(self, x, num_rounds):
         """
@@ -446,14 +451,14 @@ def main(rank, world_size: int, train_param, dataset, Net_Arch):
 
     num_epochs, rounds, learning_rate, batch_size = train_param
     detection_array_ordered, observable_flips, test_size = dataset
-    input_size, hidden_size, output_size, chain_length, fc_layers = Net_Arch
+    input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out = Net_Arch
 
     # Create data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
     detection_array_ordered, observable_flips, batch_size, test_size)
 
     # Create model
-    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers, batch_size)
+    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()
@@ -472,8 +477,8 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 11
-    num_shots = 200000
+    rounds = 5
+    num_shots = 100000
 
     # Determine system size based on distance
     if distance == 3:
@@ -528,7 +533,8 @@ if __name__ == "__main__":
     test_size = 0.2
     learning_rate = 0.005
     num_epochs = 1
-    fc_layers = [hidden_size*3, hidden_size*2, hidden_size]
+    fc_layers_intra = [0]
+    fc_layers_out = [int(hidden_size/8)]
 
     # Print configuration
     print(f"1D LSTM DDP")
@@ -545,7 +551,7 @@ if __name__ == "__main__":
     mp.spawn(main, args=(world_size,
                         (num_epochs, rounds, learning_rate, batch_size),
                         (detection_array_ordered, observable_flips, test_size),
-                        (input_size, hidden_size, output_size, chain_length, fc_layers,)),
+                        (input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out)),
                         nprocs=world_size,  join=True)
 
     end_time = time.time()
