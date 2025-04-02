@@ -319,10 +319,10 @@ def ddp_setup(rank, world_size):
     #    rank: Unique identifier of each process
     #    world_size: Total number of processes
     
-    rank = int(os.environ["RANK"])
-    world_size = int(os.environ["WORLD_SIZE"])
+    os.environ["MASTER_ADDR"] = "localhost"  # For single-node
+    os.environ["MASTER_PORT"] = "12355"
     dist.init_process_group(
-        backend="gloo",  # or "nccl" for GPU
+        backend="gloo",  # For CPU training
         rank=rank,
         world_size=world_size
     )
@@ -463,7 +463,10 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
-def main(rank, world_size: int, train_param, dataset, Net_Arch):
+def main(train_param, dataset, Net_Arch):
+
+    rank = int(os.environ["RANK"])
+    world_size = int(os.environ["WORLD_SIZE"])
     
     ddp_setup(rank, world_size)
 
@@ -476,16 +479,18 @@ def main(rank, world_size: int, train_param, dataset, Net_Arch):
     detection_array_ordered, observable_flips, batch_size, test_size)
 
     # Create model
-    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
+    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
+                     fc_layers_out, batch_size).to(rank)
+    ddp_model = DDP(model, device_ids=[rank] if torch.cuda.is_available() else None)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
 
-    train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rounds)
+    train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
     # Evaluate model
-    accuracy, predictions = evaluate_model(model, test_loader, rounds)
+    accuracy, predictions = evaluate_model(ddp_model, test_loader, rounds)
 
 
 
@@ -507,33 +512,6 @@ if __name__ == "__main__":
         num_qubits = 49
         num_data_qubits = 25
         num_ancilla_qubits = 24
-
-
-    """
-    path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
-    circuit_google = stim.Circuit.from_file(path)
-
-    # Compile the sampler
-    sampler = circuit_google.compile_detector_sampler()
-    # Sample shots, with observables
-    detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
-
-    detection_events = detection_events.astype(int)
-    detection_strings = [''.join(map(str, row)) for row in detection_events] #compress the detection events in a tensor
-    detection_events_numeric = [[int(value) for value in row] for row in detection_events] # Convert string elements to integers (or floats if needed)
-    detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
-    detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
-    order = [0,3,5,6,7,4,2,1]# Reorder using advanced indexing to create the chain connectivity
-    detection_array_ordered = detection_array1[..., order]
-
-    observable_flips = observable_flips.astype(int).flatten().tolist()
-
-    # Save with compression
-    np.savez_compressed('data_stim/google_r5.npz', detection_array_ordered = detection_array_ordered, observable_flips=observable_flips)
-    """
-    """# Load data
-    data_path = 'data_stim/google_r5.npz'
-    detection_array, observable_flips = load_data(data_path, num_shots)"""
 
     #Load data form compressed file .npz
     detection_array1, observable_flips = load_data(num_shots)
@@ -560,17 +538,18 @@ if __name__ == "__main__":
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
-    world_size = 2 #torch.cuda.device_count()
+    #world_size = 2 #torch.cuda.device_count()
+    world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
+
 
     start_time = time.time()
 
     # Train model
     #model, losses = train_parallel(model, train_loader, criterion, optimizer, num_epochs, rounds)
-    mp.spawn(main, args=(world_size,
-                        (num_epochs, rounds, learning_rate, batch_size),
+    mp.spawn(main, args=((num_epochs, rounds, learning_rate, batch_size),
                         (detection_array_ordered, observable_flips, test_size),
                         (input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out)),
-                        nprocs=world_size,  join=True)
+                         nprocs=world_size,join=True)
 
     end_time = time.time()
 
