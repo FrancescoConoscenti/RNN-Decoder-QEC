@@ -471,6 +471,10 @@ def main(rank, train_param, dataset, Net_Arch):
     # Evaluate model
     accuracy, predictions = evaluate_model(model, test_loader, rounds)
 
+    # Save model
+    torch.save(model.state_dict(), "1D_LSTM_r11.pth")
+    print(f"Model saved to 2D_LSTM_r11.pth")
+
 
 
 if __name__ == "__main__":
@@ -479,7 +483,7 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 5
+    rounds = 11
     num_shots = 100000
 
     # Determine system size based on distance
@@ -533,7 +537,7 @@ if __name__ == "__main__":
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
-    learning_rate = 0.005
+    learning_rate = 0.002
     num_epochs = 1
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/8)]
@@ -558,6 +562,4 @@ if __name__ == "__main__":
     # Print execution time
     print(f"Execution time: {end_time - start_time:.6f} seconds")
 
-    # Save model
-    #torch.save(model.state_dict(), "2D_LSTM_r11.pth")
-    #print(f"Model saved to 2D_LSTM_r11.pth")
+   
