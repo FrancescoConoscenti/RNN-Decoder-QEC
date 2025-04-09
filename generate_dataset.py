@@ -5,7 +5,7 @@ import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 
-for rounds in (5,11,17):
+for rounds in (5,11,17,21):
 
     # Configuration parameters
     distance = 5
@@ -22,11 +22,13 @@ for rounds in (5,11,17):
         num_ancilla_qubits = 24
 
     if rounds == 5:
-        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r05_center_3_5/circuit_noisy.stim"
+        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r05_center_5_5/circuit_noisy.stim"
     elif rounds == 11:
-        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r11_center_3_5/circuit_noisy.stim"
+        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r11_center_5_5/circuit_noisy.stim"
     elif rounds == 17:
-        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r17_center_3_5/circuit_noisy.stim"
+        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r17_center_5_5/circuit_noisy.stim"
+    elif rounds == 21:
+        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r21_center_5_5/circuit_noisy.stim"
 
     circuit_google = stim.Circuit.from_file(path)
 
@@ -53,5 +55,8 @@ for rounds in (5,11,17):
     elif rounds == 17:
         np.savez_compressed('data_stim/google_r17_d5.npz', detection_array1 = detection_array1, observable_flips=observable_flips)
         print("saved round = 17")
+    elif rounds == 21:
+        np.savez_compressed('data_stim/google_r21_d5.npz', detection_array1 = detection_array1, observable_flips=observable_flips)
+        print("saved round = 21")
 
         
