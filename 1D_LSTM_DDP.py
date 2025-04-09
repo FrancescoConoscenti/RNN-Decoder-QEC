@@ -489,7 +489,7 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
     # Evaluate model
-    accuracy, predictions = evaluate_model(ddp_model.module, test_loader, rounds)
+    accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
 
 
 
