@@ -395,7 +395,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
     return model, losses
 
 
-def evaluate_model(model, test_loader, num_rounds):
+def evaluate_model(rank, model, test_loader, num_rounds):
     """
     Evaluate the model on test data
     
@@ -417,6 +417,9 @@ def evaluate_model(model, test_loader, num_rounds):
     
     with torch.no_grad():
         for batch_x, batch_y in test_loader:
+
+            batch_x = batch_x.to(rank)
+            batch_y = batch_y.to(rank)
             
             # Forward pass
             output, _ = model(batch_x, num_rounds)
