@@ -1,64 +1,6 @@
 import stim
 import numpy as np
 from sklearn.model_selection import train_test_split
-
-distance=3
-rounds=11
-
-if distance ==3:
-    num_qubits=17
-    num_data_qubits=9
-    num_ancilla_qubits=8
-
-if distance ==5:
-    num_qubits=49
-    num_data_qubits=25
-    num_ancilla_qubits=24
-
-path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
-circuit_google = stim.Circuit.from_file(path)
-
-circuit_surface = stim.Circuit.generated(
-    "surface_code:rotated_memory_x",
-    rounds=rounds,
-    distance=distance,
-    after_clifford_depolarization=0.01,
-    after_reset_flip_probability=0.01,
-    before_measure_flip_probability=0.01,
-    before_round_data_depolarization=0.01)
-
-##################################################################################################à
-
-num_shots = 300
-
-
-# Compile the sampler
-sampler = circuit_surface.compile_detector_sampler()
-# Sample shots, with observables
-detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
-
-
-detection_events = detection_events.astype(int)
-detection_strings = [''.join(map(str, row)) for row in detection_events] #compress the detection events in a tensor
-detection_events_numeric = [[int(value) for value in row] for row in detection_events] # Convert string elements to integers (or floats if needed)
-detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
-
-detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
-
-observable_flips = observable_flips.astype(int).flatten().tolist()
-
-#num_shots = int(100*16*1024/0.8) #num shot multiple of batch size and of number of process
-
-"""
-# Load the compressed data
-loaded_data = np.load('data_stim/google_r11.npz')
-detection_array1 = loaded_data['detection_array1']
-detection_array1 = detection_array1[0:num_shots,:,:]
-observable_flips = loaded_data['observable_flips']
-observable_flips = observable_flips[0:num_shots]"""
-
-############################################################################################################
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -427,7 +369,92 @@ def train_rnn_parallel(model,  X_train, y_train, criterion, optimizer,  num_epoc
         avg_loss = running_loss / len(batches)
         print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {avg_loss:.4f}")
 
+def load_data(num_shots):
+    """
+    Load data from a .npz file
+    
+    Args:
+        file_path: Path to the .npz file
+        num_shots: Number of shots to load
+        
+    Returns:
+        detection_array: Array of detection events
+        observable_flips: Array of observable flips
+    """
+    # Load the compressed data
+    if rounds == 5:
+        loaded_data = np.load('data_stim/google_r5.npz')
+    if rounds == 11:
+        loaded_data = np.load('data_stim/google_r11.npz')
+    if rounds == 17:
+        loaded_data = np.load('data_stim/google_r17.npz')
+
+    detection_array1 = loaded_data['detection_array1']
+    detection_array1 = detection_array1[0:num_shots,:,:]
+    observable_flips = loaded_data['observable_flips']
+    observable_flips = observable_flips[0:num_shots]
+        
+    return detection_array1, observable_flips
+
 ###########################################################################################################
+
+distance=3
+rounds=11
+num_shots = 3000
+
+if distance ==3:
+    num_qubits=17
+    num_data_qubits=9
+    num_ancilla_qubits=8
+
+if distance ==5:
+    num_qubits=49
+    num_data_qubits=25
+    num_ancilla_qubits=24
+
+"""path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
+circuit_google = stim.Circuit.from_file(path)
+
+circuit_surface = stim.Circuit.generated(
+    "surface_code:rotated_memory_x",
+    rounds=rounds,
+    distance=distance,
+    after_clifford_depolarization=0.01,
+    after_reset_flip_probability=0.01,
+    before_measure_flip_probability=0.01,
+    before_round_data_depolarization=0.01)
+
+# Compile the sampler
+sampler = circuit_surface.compile_detector_sampler()
+# Sample shots, with observables
+detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
+
+
+detection_events = detection_events.astype(int)
+detection_strings = [''.join(map(str, row)) for row in detection_events] #compress the detection events in a tensor
+detection_events_numeric = [[int(value) for value in row] for row in detection_events] # Convert string elements to integers (or floats if needed)
+detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
+
+detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
+
+observable_flips = observable_flips.astype(int).flatten().tolist()"""
+
+#num_shots = int(100*16*1024/0.8) #num shot multiple of batch size and of number of process
+
+"""
+# Load the compressed data
+loaded_data = np.load('data_stim/google_r11.npz')
+detection_array1 = loaded_data['detection_array1']
+detection_array1 = detection_array1[0:num_shots,:,:]
+observable_flips = loaded_data['observable_flips']
+observable_flips = observable_flips[0:num_shots]"""
+
+#Load data form compressed file .npz
+detection_array1, observable_flips = load_data(num_shots)
+
+############################################################################################################
+
+
 # Hyperparameters
 input_size = 1  # Each Lattice RNN cell takes 1 bit as input
 hidden_size = 128 # Hidden size of each RNN cell

@@ -8,8 +8,8 @@ from torch.utils.data import TensorDataset, DataLoader
 for rounds in (5,11,17):
 
     # Configuration parameters
-    distance = 3
-    num_shots = 10000000
+    distance = 5
+    num_shots = 2000000
 
     # Determine system size based on distance
     if distance == 3:
@@ -22,11 +22,11 @@ for rounds in (5,11,17):
         num_ancilla_qubits = 24
 
     if rounds == 5:
-        path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
+        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r05_center_3_5/circuit_noisy.stim"
     elif rounds == 11:
-        path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r11_center_3_5/circuit_noisy.stim"
+        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r11_center_3_5/circuit_noisy.stim"
     elif rounds == 17:
-        path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/circuit_noisy.stim"
+        path = r"google_qec3v5_experiment_data/surface_code_bX_d5_r17_center_3_5/circuit_noisy.stim"
 
     circuit_google = stim.Circuit.from_file(path)
 
@@ -45,13 +45,13 @@ for rounds in (5,11,17):
 
     # Save with compression
     if rounds == 5:
-        np.savez_compressed('data_stim/google_r5.npz', detection_array1 = detection_array1, observable_flips=observable_flips)
+        np.savez_compressed('data_stim/google_r5_d5.npz', detection_array1 = detection_array1, observable_flips=observable_flips)
         print("saved round = 5")
     elif rounds == 11:
-        np.savez_compressed('data_stim/google_r11.npz', detection_array1 = detection_array1, observable_flips=observable_flips)
+        np.savez_compressed('data_stim/google_r11_d5.npz', detection_array1 = detection_array1, observable_flips=observable_flips)
         print("saved round = 11")
     elif rounds == 17:
-        np.savez_compressed('data_stim/google_r17.npz', detection_array1 = detection_array1, observable_flips=observable_flips)
+        np.savez_compressed('data_stim/google_r17_d5.npz', detection_array1 = detection_array1, observable_flips=observable_flips)
         print("saved round = 17")
 
         

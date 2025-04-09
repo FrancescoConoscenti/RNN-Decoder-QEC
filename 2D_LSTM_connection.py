@@ -56,8 +56,10 @@ class LatticeRNNCell(nn.Module):
         self.fc_input = nn.Linear(input_size, input_size)
         
         # Process combined hidden states (horizontal, vertical and previous)
-        self.hidden_processor = FullyConnectedNN(hidden_size*3, fc_layers, hidden_size)
-        self.cell_processor = FullyConnectedNN(hidden_size*3, fc_layers, hidden_size)
+        #self.hidden_processor = FullyConnectedNN(hidden_size*3, fc_layers, hidden_size)
+        self.hidden_processor = nn.Linear(hidden_size*3, hidden_size)
+        #self.cell_processor = FullyConnectedNN(hidden_size*3, fc_layers, hidden_size)
+        self.cell_processor = nn.Linear(hidden_size*3, hidden_size)
         
         # LSTM cell for time dimension
         self.lstm_cell = nn.LSTMCell(input_size, hidden_size)
@@ -78,11 +80,6 @@ class LatticeRNNCell(nn.Module):
             Tuple of (hidden_state, cell_state)
         """
         hidden_left, cell_left, hidden_up, cell_up, hidden_prev, cell_prev = hidden_states
-        device = x.device
-        
-        # Convert to tensors if necessary
-        hidden_prev = hidden_prev.to(device)
-        cell_prev = cell_prev.to(device)
         
         # Initialize missing hidden states with zeros if needed
         if hidden_left is None:
@@ -107,7 +104,7 @@ class LatticeRNNCell(nn.Module):
         return hidden, cell
 
 class LatticeRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, fc_layers, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size):
         """
         Network that processes inputs in a 2D lattice structure
         
@@ -128,12 +125,13 @@ class LatticeRNN(nn.Module):
         
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
-            LatticeRNNCell(input_size, hidden_size, fc_layers, batch_size) 
+            LatticeRNNCell(input_size, hidden_size, fc_layers_intra, batch_size) 
             for _ in range(grid_height * grid_width)
         ])
         
         # Output layer
-        self.fc_out = nn.Linear(hidden_size, output_size)
+        #self.fc_out = nn.Linear(hidden_size, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, x, h_ext, c_ext, grid_states):
@@ -202,7 +200,7 @@ class LatticeRNN(nn.Module):
         return output, final_h, final_c, grid_states
 
 class BlockRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, fc_layers, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size):
         """
         Block RNN model that processes multiple time steps of data on a 2D lattice
         
@@ -225,7 +223,7 @@ class BlockRNN(nn.Module):
         # Lattice RNN for spatial processing
         self.rnn_block = LatticeRNN(
             input_size, hidden_size, output_size, 
-            grid_height, grid_width, fc_layers, batch_size
+            grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size
         )
     
     def forward(self, x, num_rounds):
@@ -306,7 +304,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     )
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=False
+        shuffle=False, drop_last=True
     )
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test
@@ -384,9 +382,6 @@ def evaluate_model(model, test_loader, num_rounds, device='cuda'):
     
     with torch.no_grad():
         for batch_x, batch_y in test_loader:
-            # Move data to device
-            batch_x = batch_x.to(device)
-            batch_y = batch_y.to(device)
             
             # Forward pass
             output, _ = model(batch_x, num_rounds)
@@ -404,7 +399,7 @@ def evaluate_model(model, test_loader, num_rounds, device='cuda'):
     
     return accuracy, predictions
 
-def load_data(file_path, num_shots):
+def load_data(num_shots):
     """
     Load data from a .npz file
     
@@ -416,17 +411,27 @@ def load_data(file_path, num_shots):
         detection_array: Array of detection events
         observable_flips: Array of observable flips
     """
-    loaded_data = np.load(file_path)
-    detection_array = loaded_data['detection_array1'][:num_shots, :, :]
-    observable_flips = loaded_data['observable_flips'][:num_shots]
-    
-    return detection_array, observable_flips
+    # Load the compressed data
+    if rounds == 5:
+        loaded_data = np.load('data_stim/google_r5.npz')
+    if rounds == 11:
+        loaded_data = np.load('data_stim/google_r11.npz')
+    if rounds == 17:
+        loaded_data = np.load('data_stim/google_r17.npz')
+
+    detection_array1 = loaded_data['detection_array1']
+    detection_array1 = detection_array1[0:num_shots,:,:]
+    observable_flips = loaded_data['observable_flips']
+    observable_flips = observable_flips[0:num_shots]
+        
+    return detection_array1, observable_flips
+
 
 
 # Configuration parameters
 distance = 3
 rounds = 5
-num_shots = 1000
+num_shots = 10000
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -442,12 +447,9 @@ elif distance == 5:
     num_data_qubits = 25
     num_ancilla_qubits = 24
 
-"""# Load data
-data_path = 'data_stim/google_r5.npz'
-detection_array, observable_flips = load_data(data_path, num_shots)"""
 
 
-path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
+"""path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
 circuit_google = stim.Circuit.from_file(path)
 
 # Compile the sampler
@@ -459,22 +461,28 @@ detection_events = detection_events.astype(int)
 detection_strings = [''.join(map(str, row)) for row in detection_events] #compress the detection events in a tensor
 detection_events_numeric = [[int(value) for value in row] for row in detection_events] # Convert string elements to integers (or floats if needed)
 detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
-detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
+detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla"""
+
+
+# Load data
+detection_array1, observable_flips = load_data(num_shots)
+
 order = [0,5,1,3,4,6,2,7] # Reorder using advanced indexing to create the chain connectivity
 detection_array_ordered = detection_array1[..., order]
 observable_flips = observable_flips.astype(int).flatten().tolist()
 
 # Model hyperparameters
 input_size = 1
-hidden_size = 128
+hidden_size = 64
 output_size = 1
 grid_height = 4
 grid_width = 2
-batch_size = 100
+batch_size = 256
 test_size = 0.2
-learning_rate = 0.005
+learning_rate = 0.002
 num_epochs = 1
-fc_layers = [hidden_size*3, hidden_size*2, hidden_size]
+fc_layers_intra = [0] #not used
+fc_layers_out = [hidden_size]
 
 # Print configuration
 print(f"2D LSTM connection")
@@ -491,7 +499,7 @@ detection_array_2D, observable_flips, batch_size, test_size
 )
 
 # Create model
-model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, fc_layers, batch_size).to(device)
+model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size).to(device)
 
 # Define loss function and optimizer
 criterion = nn.BCELoss()
