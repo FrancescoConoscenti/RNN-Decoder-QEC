@@ -458,6 +458,7 @@ def load_data(num_shots):
         loaded_data = np.load('data_stim/google_r17.npz')
 
     detection_array1 = loaded_data['detection_array1']
+    print("Shape of detection_array1:", detection_array1.shape)
     detection_array1 = detection_array1[0:num_shots,:,:]
     observable_flips = loaded_data['observable_flips']
     observable_flips = observable_flips[0:num_shots]
