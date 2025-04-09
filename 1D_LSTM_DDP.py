@@ -300,10 +300,6 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
         train_dataset, batch_size=batch_size, pin_memory=True,
         shuffle=False, drop_last=True, sampler=train_sampler)
     
-    test_loader = DataLoader(
-        test_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=False)
-    
     #I test only on the data in the first process
     if rank == 0:
         test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
@@ -322,7 +318,7 @@ def ddp_setup(rank, world_size):
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "12355"
     dist.init_process_group(
-        backend="gloo",  # Must use "gloo" for CPU
+        backend="nccl",  # Must use "gloo" for CPU
         rank=rank,
         world_size=world_size
     )
@@ -347,13 +343,13 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
     """
 
     #model = model()#.to(rank)
-    model = DDP(model, find_unused_parameters=True) #, device_ids=[rank])
+    #model = DDP(model, find_unused_parameters=True, device_ids=[rank])
 
     losses = []
     
     for epoch in range(num_epochs):
         
-        print(f"[CPU{rank}] | Epoch {epoch} ")
+        print(f"[GPU{rank}] | Epoch {epoch} ")
 
         running_loss = 0.0
         if hasattr(train_loader.sampler, 'set_epoch'):
@@ -361,8 +357,8 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
         
         for batch_x, batch_y in train_loader:
 
-            #batch_x = batch_x.to(rank)
-            #batch_y = batch_y.to(rank)
+            batch_x = batch_x.to(rank)
+            batch_y = batch_y.to(rank)
             
             # Zero gradients
             optimizer.zero_grad()
@@ -394,6 +390,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
 
 
     dist.destroy_process_group()
+    torch.cuda.empty_cache()
 
     return model, losses
 
@@ -476,10 +473,11 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
     detection_array_ordered, observable_flips, batch_size, test_size)
 
+    torch.cuda.set_device(rank)
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
-                     fc_layers_out, batch_size)#. to(rank)
-    ddp_model = DDP(model,find_unused_parameters=True) #, device_ids=[rank] if torch.cuda.is_available() else None)
+                     fc_layers_out, batch_size). to(rank)
+    ddp_model = DDP(model,find_unused_parameters=True, device_ids=[rank])# if torch.cuda.is_available() else None)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()
@@ -488,7 +486,7 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
     # Evaluate model
-    accuracy, predictions = evaluate_model(ddp_model, test_loader, rounds)
+    accuracy, predictions = evaluate_model(ddp_model.module, test_loader, rounds)
 
 
 
@@ -536,7 +534,7 @@ if __name__ == "__main__":
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
-    #world_size = 2 #torch.cuda.device_count()
+    #world_size = torch.cuda.device_count()
     world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
 
 
