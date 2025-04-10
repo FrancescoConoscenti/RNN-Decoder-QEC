@@ -548,7 +548,7 @@ if __name__ == "__main__":
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
     #world_size = torch.cuda.device_count()
-    world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
+    world_size = int(os.environ.get("WORLD_SIZE", 2))  # Changed: Use environment variable
 
     start_time = time.time()
 
