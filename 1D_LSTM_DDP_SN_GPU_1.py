@@ -467,7 +467,7 @@ def load_data(num_shots,rounds):
         
     return detection_array1, observable_flips
 
-def everything():
+def everything(rank, world_size):
 
     # Configuration parameters
     distance = 3
@@ -510,15 +510,13 @@ def everything():
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
 
-    device = torch.device(f'cuda:{os.environ["LOCAL_RANK"]}')     
+    device = torch.device(f'cuda:{rank}')     
     torch.cuda.set_device(device)
 
     # Create data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
     detection_array_ordered, observable_flips, batch_size, test_size)
 
-    device = torch.device(f'cuda:{os.environ["LOCAL_RANK"]}')     
-    torch.cuda.set_device(device)
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
@@ -546,7 +544,7 @@ def main():
     
     ddp_setup(rank, world_size)
 
-    everything()
+    everything(rank, world_size)
     
 if __name__ == "__main__":
     main()
