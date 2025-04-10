@@ -473,6 +473,8 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
     
     ddp_setup(rank, world_size)
 
+    print(f"[GPU {rank}] CUDA device: {torch.cuda.current_device()}")
+
     num_epochs, rounds, learning_rate, batch_size = train_param
     detection_array_ordered, observable_flips, test_size = dataset
     input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out = Net_Arch
@@ -482,6 +484,7 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
     detection_array_ordered, observable_flips, batch_size, test_size)
 
     torch.cuda.set_device(rank)
+
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
                      fc_layers_out, batch_size). to(rank)
@@ -499,7 +502,7 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
 
 
 if __name__ == "__main__":
-    mp.set_start_method("spawn", force=True)  # Ensure safe multiprocessing
+    #mp.set_start_method("spawn", force=True)  # Ensure safe multiprocessing
     os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO' # Debug for unused gradients
         
     # Configuration parameters
@@ -550,12 +553,25 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Train model
-    #model, losses = train_parallel(model, train_loader, criterion, optimizer, num_epochs, rounds)
-    mp.spawn(main, args=((num_epochs, rounds, learning_rate, batch_size),
+    """mp.spawn(main, args=((num_epochs, rounds, learning_rate, batch_size),
                         (detection_array_ordered, observable_flips, test_size),
                         (input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
                          world_size),
-                         nprocs=world_size,join=True)
+                         nprocs=world_size,join=True)"""
+    
+    if world_size > 1:
+        # For SLURM launches (use this OR mp.spawn, not both)
+        main(rank=int(os.environ['RANK']), 
+             train_param=(num_epochs, rounds, learning_rate, batch_size),
+             dataset=(detection_array_ordered, observable_flips, test_size),
+             Net_Arch=(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
+             world_size=int(os.environ['WORLD_SIZE']))
+    else:
+        # Single-GPU fallback
+        main(rank=0, train_param=(num_epochs, rounds, learning_rate, batch_size),
+             dataset=(detection_array_ordered, observable_flips, test_size),
+             Net_Arch=(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
+             world_size=1)
 
     end_time = time.time()
 
