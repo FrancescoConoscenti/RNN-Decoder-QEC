@@ -41,6 +41,7 @@ class FullyConnectedNN(nn.Module):
     def forward(self, x):
         return self.network(x)
 
+
 class LatticeRNNCell(nn.Module):
     def __init__(self, input_size, hidden_size, fc_layers, batch_size):
         """
@@ -89,10 +90,10 @@ class LatticeRNNCell(nn.Module):
         hidden_prev = hidden_prev.to(device)
         cell_prev = cell_prev.to(device)
         
-        # Initialize missing hidden states with zeros if needed
+        """# Initialize missing hidden states with zeros if needed
         if hidden is None:
             hidden = torch.zeros(self.batch_size, self.hidden_size, device=device)
-            cell = torch.zeros(self.batch_size, self.hidden_size, device=device)
+            cell = torch.zeros(self.batch_size, self.hidden_size, device=device)"""
             
         # Combine hidden states from different directions
         combined_h = torch.cat((hidden, hidden_prev), dim=1)
@@ -130,12 +131,11 @@ class LatticeRNN(nn.Module):
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
             LatticeRNNCell(input_size, hidden_size, fc_layers_intra, batch_size) 
-            for _ in range(chain_length)
+            for _ in range(self.chain_length)
         ])
         
         # Output layer
-        #self.fc_out = nn.Linear(hidden_size, output_size)
-        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size)
         self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
@@ -165,19 +165,20 @@ class LatticeRNN(nn.Module):
             # Get input for current cell
             cell_input = x[:, i].unsqueeze(1).unsqueeze(1)
                 
-            # Get previous states for this cell
-            h_prev, c_prev = chain_states[i]
+            #chain:states[i] has the h,c of the previous round, 
+            #continuing the loop I overwrite element of chain_states with the h,c spatial
+            h_time, c_time= chain_states[i]
                 
             # Handle special case for the first cell
             if i == 0:
-                h = h_ext
-                c = c_ext   
-            # Get upper neighbor hidden state
+                h_space = h_ext
+                c_space = c_ext   
+            # Get spacial neighbor hidden state, from the previous LatticeRNNCell in space
             else:
-                h, c = chain_states[i-1]
+                h_space, c_space = chain_states[i-1]
             
             # Get cell index and process
-            h_new, c_new = self.cells[i](cell_input, (h, c, h_prev, c_prev))
+            h_new, c_new = self.cells[i](cell_input, (h_space, c_space, h_time, c_time))
                 
             # Update grid state
             chain_states[i] = (h_new, c_new)
@@ -185,8 +186,10 @@ class LatticeRNN(nn.Module):
         # Get final hidden state from bottom-right corner
         final_h, final_c = chain_states[-1]
         
+        final = torch.cat((final_h, final_c), dim=1)
+        
         # Generate output
-        output = self.fc_out(final_h)
+        output = self.fc_out(final)
         output = self.bn(output)
         output = self.sigmoid(output)
         
@@ -209,13 +212,13 @@ class BlockRNN(nn.Module):
         super(BlockRNN, self).__init__()
         self.hidden_size = hidden_size
         self.batch_size = batch_size
+        self.chain_length = chain_length
         
         # Input processing
         self.fc_in = nn.Linear(input_size, input_size)
         
         # Lattice RNN for spatial processing
-        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, 
-                                    fc_layers_intra, fc_layers_out, batch_size)
+        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra,fc_layers_out, batch_size)
     
     def forward(self, x, num_rounds):
         """
@@ -237,7 +240,7 @@ class BlockRNN(nn.Module):
         c_ext = torch.zeros(batch_size, self.hidden_size, device=device)
         
         # Initialize grid states
-        chain_states = [(h_ext, c_ext) for _ in range(chain_length)] 
+        chain_states = [(h_ext, c_ext) for _ in range(self.chain_length)] 
             
         
         # Process each round
@@ -484,7 +487,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 5
-    num_shots = 100000
+    num_shots = 10000
     FineTune = False
 
     # Determine system size based on distance
