@@ -544,6 +544,7 @@ if __name__ == "__main__":
 
     #world_size = torch.cuda.device_count()
     world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
+    print(f"Rank {torch.distributed.get_rank()}/{torch.distributed.get_world_size()} using GPU {torch.cuda.current_device()}")
 
 
     start_time = time.time()
