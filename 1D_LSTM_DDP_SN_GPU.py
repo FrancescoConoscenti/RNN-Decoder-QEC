@@ -471,9 +471,10 @@ def load_data(num_shots):
 
 def main(rank, train_param, dataset, Net_Arch, world_size):
     
-    ddp_setup(rank, world_size)
+    local_rank = int(os.environ['SLURM_LOCALID'])
+    ddp_setup(local_rank, world_size)
 
-    rank = int(os.environ["LOCAL_RANK"])
+    #rank = int(os.environ["LOCAL_RANK"])
     print(f"Rank {rank} | CUDA device: {torch.cuda.current_device()}")
     
     # Test GPU communication
