@@ -90,10 +90,10 @@ class LatticeRNNCell(nn.Module):
         hidden_prev = hidden_prev.to(device)
         cell_prev = cell_prev.to(device)
         
-        # Initialize missing hidden states with zeros if needed
+        """# Initialize missing hidden states with zeros if needed
         if hidden is None:
             hidden = torch.zeros(self.batch_size, self.hidden_size, device=device)
-            cell = torch.zeros(self.batch_size, self.hidden_size, device=device)
+            cell = torch.zeros(self.batch_size, self.hidden_size, device=device)"""
             
         # Combine hidden states from different directions
         combined_h = torch.cat((hidden, hidden_prev), dim=1)
@@ -135,7 +135,7 @@ class LatticeRNN(nn.Module):
         ])
         
         # Output layer
-        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size)
         self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
@@ -165,19 +165,20 @@ class LatticeRNN(nn.Module):
             # Get input for current cell
             cell_input = x[:, i].unsqueeze(1).unsqueeze(1)
                 
-            # Get previous states for this cell
-            h_prev, c_prev = chain_states[i]
+            #chain:states[i] has the h,c of the previous round, 
+            #continuing the loop I overwrite element of chain_states with the h,c spatial
+            h_time, c_time= chain_states[i]
                 
             # Handle special case for the first cell
             if i == 0:
-                h = h_ext
-                c = c_ext   
-            # Get upper neighbor hidden state
+                h_space = h_ext
+                c_space = c_ext   
+            # Get spacial neighbor hidden state, from the previous LatticeRNNCell in space
             else:
-                h, c = chain_states[i-1]
+                h_space, c_space = chain_states[i-1]
             
             # Get cell index and process
-            h_new, c_new = self.cells[i](cell_input, (h, c, h_prev, c_prev))
+            h_new, c_new = self.cells[i](cell_input, (h_space, c_space, h_time, c_time))
                 
             # Update grid state
             chain_states[i] = (h_new, c_new)
@@ -185,8 +186,11 @@ class LatticeRNN(nn.Module):
         # Get final hidden state from bottom-right corner
         final_h, final_c = chain_states[-1]
         
+        final = torch.cat((final_h, final_c), dim=1)
+        
         # Generate output
-        output = self.fc_out(final_h)
+        output = self.fc_out(final)
+        output = self.bn(output)
         output = self.sigmoid(output)
         
         return output, final_h, final_c, chain_states
@@ -322,7 +326,7 @@ def ddp_setup(rank, world_size):
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "12355"
     dist.init_process_group(
-        backend="gloo",  # Must use "gloo" for CPU
+        backend="nccl",  # Must use "gloo" for CPU
         rank=rank,
         world_size=world_size
     )
@@ -347,7 +351,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
     """
 
     #model = model()#.to(rank)
-    model = DDP(model, find_unused_parameters=True) #, device_ids=[rank])
+    model = DDP(model, find_unused_parameters=True, device_ids=[rank])
 
     losses = []
     
@@ -361,8 +365,8 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
         
         for batch_x, batch_y in train_loader:
 
-            #batch_x = batch_x.to(rank)
-            #batch_y = batch_y.to(rank)
+            batch_x = batch_x.to(rank)
+            batch_y = batch_y.to(rank)
             
             # Zero gradients
             optimizer.zero_grad()
@@ -479,8 +483,8 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
-                     fc_layers_out, batch_size)#. to(rank)
-    ddp_model = DDP(model,find_unused_parameters=True) #, device_ids=[rank] if torch.cuda.is_available() else None)
+                     fc_layers_out, batch_size). to(rank)
+    ddp_model = DDP(model,find_unused_parameters=True, device_ids=[rank] if torch.cuda.is_available() else None)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()
@@ -499,8 +503,8 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 11
-    num_shots = 20000
+    rounds = 5
+    num_shots = 100000
 
     # Determine system size based on distance
     if distance == 3:
@@ -537,7 +541,6 @@ if __name__ == "__main__":
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
-    #world_size = 2 #torch.cuda.device_count()
     world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
 
 
