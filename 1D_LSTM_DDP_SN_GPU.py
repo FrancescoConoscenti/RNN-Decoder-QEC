@@ -475,16 +475,16 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
     ddp_setup(local_rank, world_size)
 
     #rank = int(os.environ["LOCAL_RANK"])
-    print(f"Rank {rank} | CUDA device: {torch.cuda.current_device()}")
+    print(f"Rank {local_rank} | CUDA device: {torch.cuda.current_device()}")
     
     # Test GPU communication
-    tensor = torch.tensor([rank]).cuda()
+    tensor = torch.tensor([local_rank]).cuda()
     dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
-    print(f"Rank {rank} | Sum of ranks: {tensor.item()}")
+    print(f"Rank {local_rank} | Sum of ranks: {tensor.item()}")
 
     print(f"Rank {torch.distributed.get_rank()}/{torch.distributed.get_world_size()} using GPU {torch.cuda.current_device()}")
 
-    print(f"[GPU {rank}] CUDA device: {torch.cuda.current_device()}")
+    print(f"[GPU {local_rank}] CUDA device: {torch.cuda.current_device()}")
 
     num_epochs, rounds, learning_rate, batch_size = train_param
     detection_array_ordered, observable_flips, test_size = dataset
