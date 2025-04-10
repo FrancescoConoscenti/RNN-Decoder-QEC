@@ -469,8 +469,6 @@ def load_data(num_shots):
 
 def everything():
 
-    dist.init_process_group(backend="nccl", init_method="env://")
-
     # Configuration parameters
     distance = 3
     rounds = 5
