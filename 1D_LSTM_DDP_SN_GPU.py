@@ -557,6 +557,7 @@ if __name__ == "__main__":
 
     #world_size = torch.cuda.device_count()
     world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
+    rank = int(os.environ['SLURM_PROCID'])
 
     start_time = time.time()
 
@@ -569,7 +570,7 @@ if __name__ == "__main__":
     
 
         # For SLURM launches
-    main(rank=int(os.environ['RANK']), 
+    main(rank=rank, 
         train_param=(num_epochs, rounds, learning_rate, batch_size),
         dataset=(detection_array_ordered, observable_flips, test_size),
         Net_Arch=(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
