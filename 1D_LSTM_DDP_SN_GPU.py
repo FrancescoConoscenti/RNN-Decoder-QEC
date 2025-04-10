@@ -253,7 +253,7 @@ class BlockRNN(nn.Module):
         
         return output, h_ext
     
-    
+
 def create_data_loaders(detection_array, observable_flips, batch_size, test_size=0.2):
     """
     Create PyTorch DataLoaders for training and testing
@@ -505,7 +505,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 2000000
+    num_shots = 100000
 
     # Determine system size based on distance
     if distance == 3:
@@ -532,7 +532,7 @@ if __name__ == "__main__":
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.001
-    num_epochs = 20
+    num_epochs = 1
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/8)]
 
@@ -564,73 +564,3 @@ if __name__ == "__main__":
     # Save model
     #torch.save(model.state_dict(), "2D_LSTM_r11.pth")
     #print(f"Model saved to 2D_LSTM_r11.pth")
-
-
-
-    """
-import os
-import torch
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel as DDP
-
-def setup(rank, world_size):
-    dist.init_process_group(
-        backend="nccl",  # Use NCCL for GPU-based communication
-        init_method="env://",  # Use environment variables for initialization
-        rank=rank,
-        world_size=world_size
-    )
-
-def cleanup():
-    dist.destroy_process_group()
-
-def train_model(rank, world_size, model, train_loader, criterion, optimizer, num_epochs, num_rounds):
-   
-    setup(rank, world_size)
-
-    # Assign the model and data to the correct GPU
-    torch.cuda.set_device(rank)
-    model = model.to(rank)
-    model = DDP(model, device_ids=[rank])
-
-    losses = []
-    
-    for epoch in range(num_epochs):
-        running_loss = 0.0
-        
-        for batch_x, batch_y in train_loader:
-            # Move data to the correct device
-            batch_x, batch_y = batch_x.to(rank), batch_y.to(rank)
-            
-            # Zero gradients
-            optimizer.zero_grad()
-            
-            # Forward pass
-            output, _ = model(batch_x, num_rounds)
-            loss = criterion(output.squeeze(1), batch_y)
-            
-            # Backward pass and optimize
-            loss.backward()
-            optimizer.step()
-            
-            running_loss += loss.item()
-        
-        # Calculate average loss for this epoch
-        avg_loss = running_loss / len(train_loader)
-        losses.append(avg_loss)
-        
-        if rank == 0:  # Only print from the main process
-            print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
-    
-    if rank == 0:
-        print("Training finished.")
-
-    cleanup()
-
-def train_parallel(model, train_loader, criterion, optimizer, num_epochs, num_rounds):
-    
-    world_size = int(os.environ["WORLD_SIZE"])  # Total number of processes
-    rank = int(os.environ["RANK"])  # Rank of the current process
-
-    train_model(rank, world_size, model, train_loader, criterion, optimizer, num_epochs, num_rounds)
-    """
