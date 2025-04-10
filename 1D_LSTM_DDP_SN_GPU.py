@@ -320,8 +320,13 @@ def ddp_setup(rank, world_size):
     #    rank: Unique identifier of each process
     #    world_size: Total number of processes
     
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12355"
+    # Use environment variables that are already set by SLURM script
+    if "MASTER_ADDR" not in os.environ:
+        os.environ["MASTER_ADDR"] = "localhost"
+    if "MASTER_PORT" not in os.environ:
+        os.environ["MASTER_PORT"] = "12355"
+
+
     dist.init_process_group(
         backend="nccl",  # Must use "gloo" for CPU
         rank=rank,
@@ -555,8 +560,8 @@ if __name__ == "__main__":
     #world_size = torch.cuda.device_count()
     #world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
 
-    rank = int(os.environ.get("SLURM_PROCID", 0))
-    world_size = int(os.environ.get("SLURM_NTASKS", 1))
+    rank = int(os.environ.get("RANK", os.environ.get("SLURM_PROCID", 0)))
+    world_size = int(os.environ.get("WORLD_SIZE", os.environ.get("SLURM_NTASKS", 1)))
 
     start_time = time.time()
 
