@@ -548,7 +548,7 @@ if __name__ == "__main__":
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.001
-    num_epochs = 1
+    num_epochs = 20
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/8)]
 
