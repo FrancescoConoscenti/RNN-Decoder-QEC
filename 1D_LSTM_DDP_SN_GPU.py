@@ -473,6 +473,14 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
     
     ddp_setup(rank, world_size)
 
+    rank = int(os.environ["LOCAL_RANK"])
+    print(f"Rank {rank} | CUDA device: {torch.cuda.current_device()}")
+    
+    # Test GPU communication
+    tensor = torch.tensor([rank]).cuda()
+    dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
+    print(f"Rank {rank} | Sum of ranks: {tensor.item()}")
+
     print(f"Rank {torch.distributed.get_rank()}/{torch.distributed.get_world_size()} using GPU {torch.cuda.current_device()}")
 
     print(f"[GPU {rank}] CUDA device: {torch.cuda.current_device()}")
@@ -560,7 +568,7 @@ if __name__ == "__main__":
                          nprocs=world_size,join=True)"""
     
 
-        # For SLURM launches (use this OR mp.spawn, not both)
+        # For SLURM launches
     main(rank=int(os.environ['RANK']), 
         train_param=(num_epochs, rounds, learning_rate, batch_size),
         dataset=(detection_array_ordered, observable_flips, test_size),
