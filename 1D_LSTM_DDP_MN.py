@@ -136,7 +136,7 @@ class LatticeRNN(nn.Module):
         
         # Output layer
         self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size)
-        #self.bn = nn.BatchNorm1d(output_size)
+        self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, x, h_ext, c_ext, chain_states):
@@ -185,8 +185,8 @@ class LatticeRNN(nn.Module):
         
         # Get final hidden state from bottom-right corner
         final_h, final_c = chain_states[-1]
-
-        final = final_h, final_c
+        
+        final = torch.cat((final_h, final_c), dim=1)
         
         # Generate output
         output = self.fc_out(final)
@@ -487,8 +487,8 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 17
-    num_shots = 200000
+    rounds = 11
+    num_shots = 20000
 
     # Determine system size based on distance
     if distance == 3:
@@ -500,32 +500,6 @@ if __name__ == "__main__":
         num_data_qubits = 25
         num_ancilla_qubits = 24
 
-
-    """
-    path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
-    circuit_google = stim.Circuit.from_file(path)
-
-    # Compile the sampler
-    sampler = circuit_google.compile_detector_sampler()
-    # Sample shots, with observables
-    detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
-
-    detection_events = detection_events.astype(int)
-    detection_strings = [''.join(map(str, row)) for row in detection_events] #compress the detection events in a tensor
-    detection_events_numeric = [[int(value) for value in row] for row in detection_events] # Convert string elements to integers (or floats if needed)
-    detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
-    detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
-    order = [0,3,5,6,7,4,2,1]# Reorder using advanced indexing to create the chain connectivity
-    detection_array_ordered = detection_array1[..., order]
-
-    observable_flips = observable_flips.astype(int).flatten().tolist()
-
-    # Save with compression
-    np.savez_compressed('data_stim/google_r5.npz', detection_array_ordered = detection_array_ordered, observable_flips=observable_flips)
-    """
-    """# Load data
-    data_path = 'data_stim/google_r5.npz'
-    detection_array, observable_flips = load_data(data_path, num_shots)"""
 
     #Load data form compressed file .npz
     detection_array1, observable_flips = load_data(num_shots)
