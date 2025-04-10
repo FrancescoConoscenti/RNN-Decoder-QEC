@@ -440,7 +440,7 @@ def evaluate_model(rank, model, test_loader, num_rounds):
     
     return accuracy, predictions
 
-def load_data(num_shots):
+def load_data(num_shots,rounds):
     """
     Load data from a .npz file
     
@@ -485,7 +485,7 @@ def everything():
         num_ancilla_qubits = 24
 
     #Load data form compressed file .npz
-    detection_array1, observable_flips = load_data(num_shots)
+    detection_array1, observable_flips = load_data(num_shots,rounds)
 
     # Reorder using advanced indexing to create the chain connectivity
     order = [0,3,5,6,7,4,2,1]
