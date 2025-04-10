@@ -471,20 +471,16 @@ def load_data(num_shots):
 
 def main(rank, train_param, dataset, Net_Arch, world_size):
     
-    local_rank = int(os.environ['SLURM_LOCALID'])
-    ddp_setup(local_rank, world_size)
+    # Set GPU FIRST
+    torch.cuda.set_device(rank)
+    print(f"Initializing Rank {rank} on GPU {torch.cuda.current_device()}")
 
-    #rank = int(os.environ["LOCAL_RANK"])
-    print(f"Rank {local_rank} | CUDA device: {torch.cuda.current_device()}")
+    ddp_setup(rank, world_size)
     
-    # Test GPU communication
-    tensor = torch.tensor([local_rank]).cuda()
+     # Verify communication
+    tensor = torch.tensor([1.0]).cuda()
     dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
-    print(f"Rank {local_rank} | Sum of ranks: {tensor.item()}")
-
-    print(f"Rank {torch.distributed.get_rank()}/{torch.distributed.get_world_size()} using GPU {torch.cuda.current_device()}")
-
-    print(f"[GPU {local_rank}] CUDA device: {torch.cuda.current_device()}")
+    print(f"Rank {rank} | Sum: {tensor.item()}")  # Should print "2.0" (1+1)
 
     num_epochs, rounds, learning_rate, batch_size = train_param
     detection_array_ordered, observable_flips, test_size = dataset
@@ -514,7 +510,7 @@ def main(rank, train_param, dataset, Net_Arch, world_size):
 
 if __name__ == "__main__":
     #mp.set_start_method("spawn", force=True)  # Ensure safe multiprocessing
-    os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO' # Debug for unused gradients
+    #os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO' # Debug for unused gradients
         
     # Configuration parameters
     distance = 3
@@ -557,8 +553,10 @@ if __name__ == "__main__":
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
     #world_size = torch.cuda.device_count()
-    world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
-    rank = int(os.environ['SLURM_PROCID'])
+    #world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
+
+    rank = int(os.environ.get("SLURM_PROCID", 0))
+    world_size = int(os.environ.get("SLURM_NTASKS", 1))
 
     start_time = time.time()
 
