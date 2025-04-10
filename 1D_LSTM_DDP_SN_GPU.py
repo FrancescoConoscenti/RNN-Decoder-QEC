@@ -548,7 +548,7 @@ if __name__ == "__main__":
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
     #world_size = torch.cuda.device_count()
-    world_size = int(os.environ.get("WORLD_SIZE", 2))  # Changed: Use environment variable
+    world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
 
     start_time = time.time()
 
@@ -559,19 +559,13 @@ if __name__ == "__main__":
                          world_size),
                          nprocs=world_size,join=True)"""
     
-    if world_size > 1:
+
         # For SLURM launches (use this OR mp.spawn, not both)
-        main(rank=int(os.environ['RANK']), 
-             train_param=(num_epochs, rounds, learning_rate, batch_size),
-             dataset=(detection_array_ordered, observable_flips, test_size),
-             Net_Arch=(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
-             world_size=int(os.environ['WORLD_SIZE']))
-    else:
-        # Single-GPU fallback
-        main(rank=0, train_param=(num_epochs, rounds, learning_rate, batch_size),
-             dataset=(detection_array_ordered, observable_flips, test_size),
-             Net_Arch=(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
-             world_size=1)
+    main(rank=int(os.environ['RANK']), 
+        train_param=(num_epochs, rounds, learning_rate, batch_size),
+        dataset=(detection_array_ordered, observable_flips, test_size),
+        Net_Arch=(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
+        world_size=int(os.environ['WORLD_SIZE']))
 
     end_time = time.time()
 
