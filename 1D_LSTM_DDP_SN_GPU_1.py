@@ -334,7 +334,7 @@ def ddp_setup(rank, world_size):
     )
 
 
-def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rounds):
+def train_model(device, model, train_loader, criterion, optimizer, num_epochs, rounds):
     """
     Train the model
     
@@ -355,11 +355,12 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
     #model = model()#.to(rank)
     #model = DDP(model, find_unused_parameters=True, device_ids=[rank])
 
+
     losses = []
     
     for epoch in range(num_epochs):
         
-        print(f"[GPU{rank}] | Epoch {epoch} ")
+        print(f"[{dist.get_rank()}] " + "-" * 10 + f" epoch {epoch + 1}/{5}")
 
         running_loss = 0.0
         if hasattr(train_loader.sampler, 'set_epoch'):
@@ -367,8 +368,8 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
         
         for batch_x, batch_y in train_loader:
 
-            batch_x = batch_x.to(rank)
-            batch_y = batch_y.to(rank)
+            batch_x = batch_x.to(device)
+            batch_y = batch_y.to(device)
             
             # Zero gradients
             optimizer.zero_grad()
@@ -387,20 +388,12 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
 
-        if rank == 0:
-            ckp = model.module.state_dict()
-            PATH = "checkpoint.pt"
-            torch.save(ckp, PATH)
-            print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
-
-
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+        print(f"[{dist.get_rank()}] " + f"{epoch}/{num_epochs}, train_loss: {loss.item():.4f}")
     
     print("Training finished.")
 
 
     dist.destroy_process_group()
-    torch.cuda.empty_cache()
 
     return model, losses
 
@@ -474,50 +467,10 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
-def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
-    
-    # Set GPU FIRST
-    torch.cuda.set_device(rank)
-    print(f"Initializing Rank {rank} on GPU {torch.cuda.current_device()}")
+def everything():
 
-    ddp_setup(rank, world_size)
-    
-    # Verify communication
-    tensor = torch.tensor([1.0]).cuda()
-    dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
-    print(f"Rank {rank} | Sum: {tensor.item()}")  # Should print "2.0" (1+1)
+    dist.init_process_group(backend="nccl", init_method="env://")
 
-    num_epochs, rounds, learning_rate, batch_size = train_param
-    detection_array_ordered, observable_flips, test_size = dataset
-    input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out = Net_Arch
-
-    # Create data loaders
-    train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
-    detection_array_ordered, observable_flips, batch_size, test_size)
-
-    torch.cuda.set_device(local_rank)
-    gpu = torch.device("cuda")
-
-    # Create model
-    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
-                     fc_layers_out, batch_size). to(gpu)
-    ddp_model = DDP(model,find_unused_parameters=True, device_ids=[local_rank])# if torch.cuda.is_available() else None)
-
-    # Define loss function and optimizer
-    criterion = nn.BCELoss()
-    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
-
-    train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
-
-    # Evaluate model
-    accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
-
-
-
-if __name__ == "__main__":
-    #mp.set_start_method("spawn", force=True)  # Ensure safe multiprocessing
-    #os.environ['TORCH_DISTRIBUTED_DEBUG'] = 'INFO' # Debug for unused gradients
-        
     # Configuration parameters
     distance = 3
     rounds = 5
@@ -558,36 +511,44 @@ if __name__ == "__main__":
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
-    #world_size = torch.cuda.device_count()
-    #world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
 
-    
+    device = torch.device(f'cuda:{os.environ["LOCAL_RANK"]}')     
+    torch.cuda.set_device(device)
+
+    # Create data loaders
+    train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
+    detection_array_ordered, observable_flips, batch_size, test_size)
+
+    device = torch.device(f'cuda:{os.environ["LOCAL_RANK"]}')     
+    torch.cuda.set_device(device)
+
+    # Create model
+    model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
+                     fc_layers_out, batch_size).to(device)
+    ddp_model = DDP(model,find_unused_parameters=True, device_ids=[device])# if torch.cuda.is_available() else None)
+
+    # Define loss function and optimizer
+    criterion = nn.BCELoss()
+    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
+
+    start_time = time.time()
+    train_model(device, model, train_loader, criterion, optimizer, num_epochs, rounds)
+    end_time = time.time()
+    print(f"Execution time: {end_time - start_time:.6f} seconds")
+
+    # Evaluate model
+    accuracy, predictions = evaluate_model(device, ddp_model.module, test_loader, rounds)
+
+
+def main():
+
     world_size = int(os.environ.get("WORLD_SIZE", os.environ.get("SLURM_NTASKS")))
     rank = int(os.environ.get("RANK", os.environ.get("SLURM_PROCID")))
     local_rank = int(os.environ.get('LOCAL_RANK', os.environ.get('SLURM_LOCALID')))
-
-    start_time = time.time()
-
-    # Train model
-    """mp.spawn(main, args=((num_epochs, rounds, learning_rate, batch_size),
-                        (detection_array_ordered, observable_flips, test_size),
-                        (input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
-                         world_size),
-                         nprocs=world_size,join=True)"""
     
+    ddp_setup(rank, world_size)
 
-        # For SLURM launches
-    main(rank=rank, local_rank=local_rank,
-        train_param=(num_epochs, rounds, learning_rate, batch_size),
-        dataset=(detection_array_ordered, observable_flips, test_size),
-        Net_Arch=(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
-        world_size=world_size)
-
-    end_time = time.time()
-
-    # Print execution time
-    print(f"Execution time: {end_time - start_time:.6f} seconds")
-
-    # Save model
-    #torch.save(model.state_dict(), "2D_LSTM_r11.pth")
-    #print(f"Model saved to 2D_LSTM_r11.pth")
+    everything()
+    
+if __name__ == "__main__":
+    main()
