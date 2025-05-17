@@ -546,7 +546,7 @@ if __name__ == "__main__":
     hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
-    batch_size = 256
+    batch_size = 512
     test_size = 0.2
     learning_rate = 0.001
     num_epochs = 20
