@@ -406,8 +406,9 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
 
     return model, losses
 
-def finetune(model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds):
+def finetune(ddp_model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds):
 
+    model = ddp_model.module
     losses = []
 
     for epoch in range(num_epochs):
@@ -435,7 +436,6 @@ def finetune(model, train_loader_exp, criterion, optimizer, num_epochs_fine, rou
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
     
     print("Training finished.")
-
 
     return model, losses
 
