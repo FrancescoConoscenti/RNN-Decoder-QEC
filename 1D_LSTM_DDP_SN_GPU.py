@@ -406,6 +406,38 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
 
     return model, losses
 
+def finetune(model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds):
+
+    losses = []
+
+    for epoch in range(num_epochs):
+        total_loss = 0
+        
+        for batch_x, batch_y in train_loader_exp:
+            # Zero gradients
+            optimizer.zero_grad()
+            
+            # Forward pass
+            output, _ = model(batch_x, rounds)
+            loss = criterion(output.squeeze(1), batch_y)
+            
+            # Backward pass and optimize
+            loss.backward()
+            optimizer.step()
+            
+            running_loss += loss.item()
+        
+        # Calculate average loss for this epoch
+        avg_loss = running_loss / len(train_loader_exp)
+        losses.append(avg_loss)
+
+
+        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+    
+    print("Training finished.")
+
+
+    return model, losses
 
 
 def evaluate_model(rank, model, test_loader, num_rounds):
@@ -564,15 +596,8 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     #train
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
-    # Re-wrap model after first training
-    #torch.distributed.barrier()  # Sync before re-wrapping (optional safety)
-    ddp_model = DDP(ddp_model, find_unused_parameters=True, device_ids=[local_rank])  # Re-create fresh DDP instance
-    #train_sampler_exp = torch.utils.data.distributed.DistributedSampler(train_loader_exp, num_replicas=world_size, rank=rank, shuffle=True)
-    #train_loader_exp = DataLoader(train_loader_exp, batch_size=batch_size, sampler=train_sampler_exp)
-    torch.cuda.empty_cache()
-
     #finetuning
-    train_model(rank, ddp_model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
+    finetune(ddp_model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
 
 
     # Evaluate model
