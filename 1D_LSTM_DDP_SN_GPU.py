@@ -489,7 +489,7 @@ def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
         shots.append(shot)
     return shots
 
-def load_data_exp(num_shots):
+def load_data_exp():
 
     # Load the compressed data
     if rounds == 5:
@@ -521,10 +521,9 @@ def load_data_exp(num_shots):
     obs_exp_bit = [bit-48 for bit in obs_exp]
     obs_exp_bit_array = np.array(obs_exp_bit)
 
-
     X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
 
-    return X_train_exp, X_test_exp, y_train_exp, y_test_exp
+    return detection_exp2, obs_exp_bit_array
 
 def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     
@@ -596,7 +595,7 @@ if __name__ == "__main__":
 
     #Load data form compressed file .npz
     detection_array1, observable_flips = load_data(num_shots)
-    detection_array_exp, observable_flips_exp = load_data_exp(num_shots)
+    detection_array_exp, observable_flips_exp = load_data_exp()
 
     # Reorder using advanced indexing to create the chain connectivity
     order = [0,3,5,6,7,4,2,1]
