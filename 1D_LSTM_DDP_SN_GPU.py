@@ -502,7 +502,7 @@ def load_data_exp(num_shots):
         path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/detection_events.b8"
         path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/obs_flips_actual.01"
 
-    bits_per_shot = round*8
+    bits_per_shot = rounds*8
 
     with open(path1, "rb") as file:
         # Read the file content as bytes
