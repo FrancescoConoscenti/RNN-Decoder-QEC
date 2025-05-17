@@ -13,29 +13,27 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 class FullyConnectedNN(nn.Module):
-    def __init__(self, input_size, hidden_layers, output_size):
-        """
-        Multi-layer fully connected network
-        
-        Args:
-            input_size: Number of input features
-            hidden_layers: List of hidden layer sizes
-            output_size: Size of output
-        """
+    def __init__(self, input_size, layers_sizes, hidden_size):
         super(FullyConnectedNN, self).__init__()
         
         layers = []
-        prev_size = input_size
-        
-        # Build hidden layers with activations
-        for size in hidden_layers:
-            layers.append(nn.Linear(prev_size, size))
+
+        if layers_sizes == [0]:
+            layers.append(nn.Linear(input_size, hidden_size))
+            # Define activation function (e.g., ReLU)
             layers.append(nn.ReLU())
-            prev_size = size
+
+        else:
+            layers.append(nn.Linear(input_size, layers_sizes[0]))
+            # Define hidden layers
+            for i in range(len(layers_sizes) - 1):
+                layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+                layers.append(nn.ReLU())
             
-        # Add output layer (no activation - handled separately)
-        layers.append(nn.Linear(prev_size, output_size))
-        
+            # Define output layer
+            layers.append(nn.Linear(layers_sizes[-1], hidden_size))
+
+
         # Combined sequential model
         self.network = nn.Sequential(*layers)
 
@@ -85,6 +83,7 @@ class LatticeRNNCell(nn.Module):
             Tuple of (hidden_state, cell_state)
         """
         hidden_left, cell_left, hidden_up, cell_up, hidden_prev, cell_prev = hidden_states
+        device = x.device
         
         # Initialize missing hidden states with zeros if needed
         if hidden_left is None:
@@ -424,7 +423,7 @@ def evaluate_model(model, test_loader, num_rounds, device='cuda'):
     
     return accuracy, predictions
 
-def load_data(num_shots):
+def load_data(num_shots, rounds):
     """
     Load data from a .npz file
     
@@ -509,7 +508,7 @@ if __name__ == "__main__":
         num_ancilla_qubits = 24
 
     # Load and reorder data
-    detection_array1, observable_flips = load_data(num_shots)
+    detection_array1, observable_flips = load_data(num_shots,rounds)
     order = [0, 5, 1, 3, 4, 6, 2, 7]
     detection_array_ordered = detection_array1[..., order]
     observable_flips = np.array(observable_flips).astype(int).flatten().tolist()
