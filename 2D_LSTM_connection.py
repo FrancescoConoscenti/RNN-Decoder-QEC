@@ -498,8 +498,8 @@ if __name__ == "__main__":
 
     # Configuration
     distance = 3
-    rounds = 5
-    num_shots = 5000
+    rounds = 11
+    num_shots = 5000000
 
     if distance == 3:
         num_qubits = 17
@@ -518,14 +518,14 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 64
+    hidden_size = 128
     output_size = 1
     grid_height = 4
     grid_width = 2
-    batch_size = 256
+    batch_size = 512
     test_size = 0.2
-    learning_rate = 0.002
-    num_epochs = 1
+    learning_rate = 0.001
+    num_epochs = 20
     fc_layers_intra = [0]
     fc_layers_out = [hidden_size]
 
