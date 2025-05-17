@@ -523,7 +523,7 @@ def load_data_exp():
 
     X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
 
-    return detection_exp2, obs_exp_bit_array
+    return detection_exp2, obs_exp_bit_array 
 
 def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     
