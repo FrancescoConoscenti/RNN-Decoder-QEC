@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=2000000
+num_shots=2000
 # Compile the sampler
 sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
@@ -60,7 +60,7 @@ X_train, X_test, y_train, y_test = train_test_split(detection_array1, observable
 
 ###################################################################################################################
 #experimental
-"""def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
+def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
     shots = []
     bytes_per_shot = (bits_per_shot + 7) // 8
     for offset in range(0, len(data), bytes_per_shot):
@@ -96,7 +96,7 @@ obs_exp_bit = [bit-48 for bit in obs_exp]
 obs_exp_bit_array = np.array(obs_exp_bit)
 
 
-X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)"""
+X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
 
 ##############################################################################################################################
 #train model
@@ -200,7 +200,7 @@ def train(model, binary_sequences, targets, num_epochs, learning_rate, batch_siz
         print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss/num_batches:.4f}')
 
 
-def finetune(model, binary_sequences, targets, num_epochs, learning_rate, batch_size,num_layers):
+def finetune(model, binary_sequences, targets, num_epochs, learning_rate, batch_size):
     
     criterion = nn.BCELoss()  # Binary Cross Entropy Loss
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
@@ -301,7 +301,7 @@ model = BinaryRNN(input_size, hidden_size, output_size)
 train(model, X_train, y_train, num_epochs, learning_rate, batch_size)
 
 #finetuning
-#finetune(model, X_train_exp, y_train_exp, num_epochs_fine, learning_rate_fine, batch_size)
+finetune(model, X_train_exp, y_train_exp, num_epochs_fine, learning_rate_fine, batch_size)
     
-test(model, X_test, y_test,batch_size)
-#test(model, X_test_exp, y_test_exp ,batch_size)
+#test(model, X_test, y_test,batch_size)
+test(model, X_test_exp, y_test_exp ,batch_size)

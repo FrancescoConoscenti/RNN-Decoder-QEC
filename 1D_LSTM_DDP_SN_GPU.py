@@ -12,6 +12,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data.distributed import DistributedSampler
 import time
+from typing import List
 
 
 class FullyConnectedNN(nn.Module):
@@ -406,6 +407,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
     return model, losses
 
 
+
 def evaluate_model(rank, model, test_loader, num_rounds):
     """
     Evaluate the model on test data
@@ -475,6 +477,55 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
+def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
+    shots = []
+    bytes_per_shot = (bits_per_shot + 7) // 8
+    for offset in range(0, len(data), bytes_per_shot):
+        shot = []
+        for k in range(bits_per_shot):
+            byte = data[offset + k // 8]
+            bit = (byte >> (k % 8)) % 2 == 1
+            shot.append(bit)
+        shots.append(shot)
+    return shots
+
+def load_data_exp(num_shots):
+
+    # Load the compressed data
+    if rounds == 5:
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/obs_flips_actual.01"
+    if rounds == 11:
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r11_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r11_center_3_5/obs_flips_actual.01"
+    if rounds == 17:
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/obs_flips_actual.01"
+
+    bits_per_shot = round*8
+
+    with open(path1, "rb") as file:
+        # Read the file content as bytes
+        data_detection = file.read()
+
+    detection_exp = parse_b8(data_detection,bits_per_shot)
+    detection_exp1 = np.array(detection_exp)
+    detection_exp2 = detection_exp1.reshape(50000, rounds, num_ancilla_qubits)
+
+
+    with open(path2, "rb") as file:
+        # Read the file content as bytes
+        data_obs = file.read()
+
+    obs_exp = data_obs.replace(b"\n", b"")
+    obs_exp_bit = [bit-48 for bit in obs_exp]
+    obs_exp_bit_array = np.array(obs_exp_bit)
+
+
+    X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
+
+    return X_train_exp, X_test_exp, y_train_exp, y_test_exp
+
 def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     
     # Set GPU FIRST
@@ -488,13 +539,16 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
     print(f"Rank {rank} | Sum: {tensor.item()}")  # Should print "2.0" (1+1)
 
-    num_epochs, rounds, learning_rate, batch_size = train_param
-    detection_array_ordered, observable_flips, test_size = dataset
+    num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size = train_param
+    detection_array_ordered, observable_flips,  detection_array_ordered_exp, observable_flips_exp, test_size = dataset
     input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out = Net_Arch
 
     # Create data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
     detection_array_ordered, observable_flips, batch_size, test_size)
+
+    train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
+    detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
 
     torch.cuda.set_device(local_rank)
     gpu = torch.device("cuda")
@@ -508,10 +562,16 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     criterion = nn.BCELoss()
     optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
 
+    #train
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
+    #finetuning
+    train_model(rank, ddp_model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
+
+
     # Evaluate model
-    accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
+    #accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
+    accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader_exp, rounds)
 
 
 
@@ -536,10 +596,12 @@ if __name__ == "__main__":
 
     #Load data form compressed file .npz
     detection_array1, observable_flips = load_data(num_shots)
+    detection_array_exp, observable_flips_exp = load_data_exp(num_shots)
 
     # Reorder using advanced indexing to create the chain connectivity
     order = [0,3,5,6,7,4,2,1]
     detection_array_ordered = detection_array1[..., order]
+    detection_array_ordered_exp = detection_array_exp[..., order]
 
     # Model hyperparameters
     input_size = 1
@@ -549,7 +611,9 @@ if __name__ == "__main__":
     batch_size = 512
     test_size = 0.2
     learning_rate = 0.001
+    learning_rate_fine = 0.001
     num_epochs = 20
+    num_epochs_fine = 5
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/8)]
 
@@ -579,8 +643,8 @@ if __name__ == "__main__":
 
     # For SLURM launches
     main(rank=rank, local_rank=local_rank,
-        train_param=(num_epochs, rounds, learning_rate, batch_size),
-        dataset=(detection_array_ordered, observable_flips, test_size),
+        train_param=(num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size),
+        dataset=(detection_array_ordered, observable_flips, detection_array_ordered_exp, observable_flips_exp, test_size),
         Net_Arch=(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
         world_size=world_size)
 
