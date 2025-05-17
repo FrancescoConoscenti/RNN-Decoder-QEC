@@ -565,8 +565,8 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
     # Re-wrap model after first training
-    torch.distributed.barrier()  # Sync before re-wrapping (optional safety)
-    #ddp_model = DDP(model, device_ids=[rank])  # Re-create fresh DDP instance
+    #torch.distributed.barrier()  # Sync before re-wrapping (optional safety)
+    ddp_model = DDP(ddp_model, find_unused_parameters=True, device_ids=[local_rank])  # Re-create fresh DDP instance
     #train_sampler_exp = torch.utils.data.distributed.DistributedSampler(train_loader_exp, num_replicas=world_size, rank=rank, shuffle=True)
     #train_loader_exp = DataLoader(train_loader_exp, batch_size=batch_size, sampler=train_sampler_exp)
     torch.cuda.empty_cache()
