@@ -411,7 +411,7 @@ def finetune(rank, model, train_loader_exp, criterion, optimizer, num_epochs_fin
     losses = []
 
     for epoch in range(num_epochs_fine):
-        total_loss = 0
+        running_loss = 0.0
         
         for batch_x, batch_y in train_loader_exp:
 
