@@ -334,7 +334,7 @@ def ddp_setup(rank, world_size):
     )
 
 
-def train_model(model, train_loader, criterion, optimizer, num_epochs, num_rounds, device='cuda'):
+def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num_rounds, device='cuda'):
     """
     Train the model
     
@@ -497,7 +497,7 @@ if __name__ == "__main__":
     # Configuration
     distance = 3
     rounds = 5
-    num_shots = 50000
+    num_shots = 5000
 
     if distance == 3:
         num_qubits = 17
