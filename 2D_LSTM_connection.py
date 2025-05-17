@@ -384,6 +384,43 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
     print("Training finished.")
     return model, losses
 
+def finetune(rank, model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds):
+
+    losses = []
+
+    for epoch in range(num_epochs_fine):
+        running_loss = 0.0
+        
+        for batch_x, batch_y in train_loader_exp:
+
+            batch_x = batch_x.to(rank)
+            batch_y = batch_y.to(rank)
+
+            # Zero gradients
+            optimizer.zero_grad()
+            
+            # Forward pass
+            output, _ = model(batch_x, rounds)
+            loss = criterion(output.squeeze(1), batch_y)
+            
+            # Backward pass and optimize
+            loss.backward()
+            optimizer.step()
+            
+            running_loss += loss.item()
+        
+        # Calculate average loss for this epoch
+        avg_loss = running_loss / len(train_loader_exp)
+        losses.append(avg_loss)
+
+
+        print(f"Epoch [{epoch+1}/{num_epochs_fine}], Loss: {avg_loss:.4f}")
+    
+    print("Training finished.")
+
+    return model, losses
+
+
 def evaluate_model(rank, model, test_loader, num_rounds):
     """
     Evaluate the model on test data
@@ -453,6 +490,54 @@ def load_data(num_shots, rounds):
         
     return detection_array1, observable_flips
 
+def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
+    shots = []
+    bytes_per_shot = (bits_per_shot + 7) // 8
+    for offset in range(0, len(data), bytes_per_shot):
+        shot = []
+        for k in range(bits_per_shot):
+            byte = data[offset + k // 8]
+            bit = (byte >> (k % 8)) % 2 == 1
+            shot.append(bit)
+        shots.append(shot)
+    return shots
+
+def load_data_exp():
+
+    # Load the compressed data
+    if rounds == 5:
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/obs_flips_actual.01"
+    if rounds == 11:
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r11_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r11_center_3_5/obs_flips_actual.01"
+    if rounds == 17:
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/obs_flips_actual.01"
+
+    bits_per_shot = rounds*8
+
+    with open(path1, "rb") as file:
+        # Read the file content as bytes
+        data_detection = file.read()
+
+    detection_exp = parse_b8(data_detection,bits_per_shot)
+    detection_exp1 = np.array(detection_exp)
+    detection_exp2 = detection_exp1.reshape(50000, rounds, num_ancilla_qubits)
+
+
+    with open(path2, "rb") as file:
+        # Read the file content as bytes
+        data_obs = file.read()
+
+    obs_exp = data_obs.replace(b"\n", b"")
+    obs_exp_bit = [bit-48 for bit in obs_exp]
+    obs_exp_bit_array = np.array(obs_exp_bit)
+
+    X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
+
+    return detection_exp2, obs_exp_bit_array 
+
 def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     torch.cuda.set_device(rank)
     print(f"Initializing Rank {rank} on GPU {torch.cuda.current_device()}")
@@ -465,8 +550,8 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     print(f"Rank {rank} | Sum: {tensor.item()}")
 
     # Unpack parameters
-    num_epochs, rounds, learning_rate, batch_size = train_param
-    detection_array_ordered, observable_flips, test_size = dataset
+    num_epochs, num_epochs, rounds, learning_rate, learning_rate_fine, batch_size = train_param
+    detection_array_ordered, observable_flips, detection_array_ordered_exp, observable_flips_exp, test_size = dataset
     input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out = Net_Arch
 
     # Adapt data topology
@@ -475,6 +560,9 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     # Data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
         detection_array_2D, observable_flips, batch_size, test_size)
+    
+    train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
+    detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
 
     # Model
     gpu = torch.device("cuda")
@@ -489,6 +577,10 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     # Train
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
+     #finetuning
+    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
+    finetune(rank, ddp_model.module, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
+
     # Evaluate
     accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
 
@@ -498,8 +590,8 @@ if __name__ == "__main__":
 
     # Configuration
     distance = 3
-    rounds = 17
-    num_shots = 5000000
+    rounds = 5
+    num_shots = 5000
 
     if distance == 3:
         num_qubits = 17
@@ -510,11 +602,18 @@ if __name__ == "__main__":
         num_data_qubits = 25
         num_ancilla_qubits = 24
 
+    order = [0, 5, 1, 3, 4, 6, 2, 7]
+
     # Load and reorder data
     detection_array1, observable_flips = load_data(num_shots,rounds)
-    order = [0, 5, 1, 3, 4, 6, 2, 7]
     detection_array_ordered = detection_array1[..., order]
     observable_flips = np.array(observable_flips).astype(int).flatten().tolist()
+
+    # Load and reorder data_exp
+    detection_array_exp, observable_flips_exp = load_data_exp()
+    detection_array_ordered_exp = detection_array_exp[..., order]
+    observable_flips_exp = np.array(observable_flips_exp).astype(int).flatten().tolist()
+    
 
     # Model hyperparameters
     input_size = 1
@@ -525,7 +624,9 @@ if __name__ == "__main__":
     batch_size = 512
     test_size = 0.2
     learning_rate = 0.001
+    learning_rate_fine = 0.0001
     num_epochs = 20
+    num_epochs_fine = 5
     fc_layers_intra = [0]
     fc_layers_out = [hidden_size]
 
@@ -543,8 +644,9 @@ if __name__ == "__main__":
 
     # Run main function
     main(rank=rank, local_rank=local_rank,
-         train_param=(num_epochs, rounds, learning_rate, batch_size),
-         dataset=(detection_array_ordered, observable_flips, test_size),
+         train_param=(num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size),
+         dataset=(detection_array_ordered, observable_flips, 
+                  detection_array_ordered_exp, observable_flips_exp, test_size),
          Net_Arch=(input_size, hidden_size, output_size, grid_height, grid_width,
                    fc_layers_intra, fc_layers_out),
          world_size=world_size)

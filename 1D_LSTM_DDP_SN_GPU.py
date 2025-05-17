@@ -436,7 +436,7 @@ def finetune(rank, model, train_loader_exp, criterion, optimizer, num_epochs_fin
         losses.append(avg_loss)
 
 
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+        print(f"Epoch [{epoch+1}/{num_epochs_fine}], Loss: {avg_loss:.4f}")
     
     print("Training finished.")
 
