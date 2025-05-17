@@ -1,11 +1,16 @@
 import stim
+import os
 import numpy as np
+import time
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 import torch.multiprocessing as mp
+import torch.optim as optim
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, hidden_layers, output_size):
@@ -309,6 +314,26 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test
 
+def ddp_setup(rank, world_size):
+    
+    #Args:
+    #    rank: Unique identifier of each process
+    #    world_size: Total number of processes
+    
+    # Use environment variables that are already set by SLURM script
+    if "MASTER_ADDR" not in os.environ:
+        os.environ["MASTER_ADDR"] = "localhost"
+    if "MASTER_PORT" not in os.environ:
+        os.environ["MASTER_PORT"] = "12355"
+
+
+    dist.init_process_group(
+        backend="nccl",  # Must use "gloo" for CPU
+        rank=rank,
+        world_size=world_size
+    )
+
+
 def train_model(model, train_loader, criterion, optimizer, num_epochs, num_rounds, device='cuda'):
     """
     Train the model
@@ -426,91 +451,102 @@ def load_data(num_shots):
         
     return detection_array1, observable_flips
 
+def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
+    torch.cuda.set_device(rank)
+    print(f"Initializing Rank {rank} on GPU {torch.cuda.current_device()}")
+
+    ddp_setup(rank, world_size)
+
+    # Test DDP communication
+    tensor = torch.tensor([1.0]).cuda()
+    dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
+    print(f"Rank {rank} | Sum: {tensor.item()}")
+
+    # Unpack parameters
+    num_epochs, rounds, learning_rate, batch_size = train_param
+    detection_array_ordered, observable_flips, test_size = dataset
+    input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out = Net_Arch
+
+    # Adapt data topology
+    detection_array_2D = detection_array_ordered.reshape(-1, rounds, grid_height, grid_width)
+
+    # Data loaders
+    train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
+        detection_array_2D, observable_flips, batch_size, test_size)
+
+    # Model
+    gpu = torch.device("cuda")
+    model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width,
+                     fc_layers_intra, fc_layers_out, batch_size).to(gpu)
+    ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])
+
+    # Loss and optimizer
+    criterion = nn.BCELoss()
+    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
+
+    # Train
+    train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
+
+    # Evaluate
+    accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
 
 
-# Configuration parameters
-distance = 3
-rounds = 5
-num_shots = 10000
+if __name__ == "__main__":
+    import numpy as np
 
-# Set device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
+    # Configuration
+    distance = 3
+    rounds = 5
+    num_shots = 50000
 
-# Determine system size based on distance
-if distance == 3:
-    num_qubits = 17
-    num_data_qubits = 9
-    num_ancilla_qubits = 8
-elif distance == 5:
-    num_qubits = 49
-    num_data_qubits = 25
-    num_ancilla_qubits = 24
+    if distance == 3:
+        num_qubits = 17
+        num_data_qubits = 9
+        num_ancilla_qubits = 8
+    elif distance == 5:
+        num_qubits = 49
+        num_data_qubits = 25
+        num_ancilla_qubits = 24
 
+    # Load and reorder data
+    detection_array1, observable_flips = load_data(num_shots)
+    order = [0, 5, 1, 3, 4, 6, 2, 7]
+    detection_array_ordered = detection_array1[..., order]
+    observable_flips = np.array(observable_flips).astype(int).flatten().tolist()
 
+    # Model hyperparameters
+    input_size = 1
+    hidden_size = 64
+    output_size = 1
+    grid_height = 4
+    grid_width = 2
+    batch_size = 256
+    test_size = 0.2
+    learning_rate = 0.002
+    num_epochs = 1
+    fc_layers_intra = [0]
+    fc_layers_out = [hidden_size]
 
-"""path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
-circuit_google = stim.Circuit.from_file(path)
+    print(f"2D LSTM DDP")
+    print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
+    print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
+    print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
 
-# Compile the sampler
-sampler = circuit_google.compile_detector_sampler()
-# Sample shots, with observables
-detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
+    # World size and rank
+    world_size = int(os.environ.get("WORLD_SIZE", os.environ.get("SLURM_NTASKS", 1)))
+    rank = int(os.environ.get("RANK", os.environ.get("SLURM_PROCID", 0)))
+    local_rank = int(os.environ.get("LOCAL_RANK", os.environ.get("SLURM_LOCALID", 0)))
 
-detection_events = detection_events.astype(int)
-detection_strings = [''.join(map(str, row)) for row in detection_events] #compress the detection events in a tensor
-detection_events_numeric = [[int(value) for value in row] for row in detection_events] # Convert string elements to integers (or floats if needed)
-detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
-detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla"""
+    start_time = time.time()
 
+    # Run main function
+    main(rank=rank, local_rank=local_rank,
+         train_param=(num_epochs, rounds, learning_rate, batch_size),
+         dataset=(detection_array_ordered, observable_flips, test_size),
+         Net_Arch=(input_size, hidden_size, output_size, grid_height, grid_width,
+                   fc_layers_intra, fc_layers_out),
+         world_size=world_size)
 
-# Load data
-detection_array1, observable_flips = load_data(num_shots)
+    end_time = time.time()
+    print(f"Execution time: {end_time - start_time:.6f} seconds")
 
-order = [0,5,1,3,4,6,2,7] # Reorder using advanced indexing to create the chain connectivity
-detection_array_ordered = detection_array1[..., order]
-observable_flips = observable_flips.astype(int).flatten().tolist()
-
-# Model hyperparameters
-input_size = 1
-hidden_size = 64
-output_size = 1
-grid_height = 4
-grid_width = 2
-batch_size = 256
-test_size = 0.2
-learning_rate = 0.002
-num_epochs = 1
-fc_layers_intra = [0] #not used
-fc_layers_out = [hidden_size]
-
-# Print configuration
-print(f"2D LSTM connection")
-print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
-print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
-print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
-
-#adapt input data topology of model
-detection_array_2D = detection_array_ordered.reshape(num_shots, rounds, grid_height, grid_width)
-
-# Create data loaders
-train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
-detection_array_2D, observable_flips, batch_size, test_size
-)
-
-# Create model
-model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size).to(device)
-
-# Define loss function and optimizer
-criterion = nn.BCELoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-# Train model
-model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds, device)
-
-# Evaluate model
-accuracy, predictions = evaluate_model(model, test_loader, rounds, device)
-
-# Save model
-torch.save(model.state_dict(), "2D_LSTM_r11.pth")
-print(f"Model saved to 2D_LSTM_r11.pth")
