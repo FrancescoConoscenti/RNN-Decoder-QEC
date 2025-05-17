@@ -555,7 +555,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
                      fc_layers_out, batch_size). to(gpu)
-    ddp_model = DDP(model,find_unused_parameters=True, device_ids=[local_rank])# if torch.cuda.is_available() else None)
+    ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])# if torch.cuda.is_available() else None)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()
@@ -563,6 +563,13 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
 
     #train
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
+
+    # Re-wrap model after first training
+    torch.distributed.barrier()  # Sync before re-wrapping (optional safety)
+    #ddp_model = DDP(model, device_ids=[rank])  # Re-create fresh DDP instance
+    #train_sampler_exp = torch.utils.data.distributed.DistributedSampler(train_loader_exp, num_replicas=world_size, rank=rank, shuffle=True)
+    #train_loader_exp = DataLoader(train_loader_exp, batch_size=batch_size, sampler=train_sampler_exp)
+    torch.cuda.empty_cache()
 
     #finetuning
     train_model(rank, ddp_model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
@@ -580,7 +587,7 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 17
+    rounds = 5
     num_shots = 5000
 
     # Determine system size based on distance
@@ -610,8 +617,8 @@ if __name__ == "__main__":
     batch_size = 512
     test_size = 0.2
     learning_rate = 0.001
-    learning_rate_fine = 0.001
-    num_epochs = 20
+    learning_rate_fine = 0.0001
+    num_epochs = 30
     num_epochs_fine = 5
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/8)]
