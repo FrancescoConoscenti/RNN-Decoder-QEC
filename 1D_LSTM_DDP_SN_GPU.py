@@ -13,6 +13,7 @@ from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data.distributed import DistributedSampler
 import time
 
+
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size):
         super(FullyConnectedNN, self).__init__()
@@ -545,7 +546,7 @@ if __name__ == "__main__":
     hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
-    batch_size = 512
+    batch_size = 256
     test_size = 0.2
     learning_rate = 0.001
     num_epochs = 20
@@ -576,7 +577,7 @@ if __name__ == "__main__":
                          nprocs=world_size,join=True)"""
     
 
-        # For SLURM launches
+    # For SLURM launches
     main(rank=rank, local_rank=local_rank,
         train_param=(num_epochs, rounds, learning_rate, batch_size),
         dataset=(detection_array_ordered, observable_flips, test_size),
