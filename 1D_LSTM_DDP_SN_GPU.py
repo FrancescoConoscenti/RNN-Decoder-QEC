@@ -406,15 +406,18 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
 
     return model, losses
 
-def finetune(ddp_model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds):
+def finetune(rank, model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds):
 
-    model = ddp_model.module
     losses = []
 
-    for epoch in range(num_epochs):
+    for epoch in range(num_epochs_fine):
         total_loss = 0
         
         for batch_x, batch_y in train_loader_exp:
+
+            batch_x = batch_x.to(rank)
+            batch_y = batch_y.to(rank)
+
             # Zero gradients
             optimizer.zero_grad()
             
@@ -589,15 +592,15 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
                      fc_layers_out, batch_size). to(gpu)
     ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])# if torch.cuda.is_available() else None)
 
+    #train
     # Define loss function and optimizer
     criterion = nn.BCELoss()
     optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
-
-    #train
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
     #finetuning
-    finetune(ddp_model, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
+    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
+    finetune(rank, ddp_model.module, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
 
 
     # Evaluate model
