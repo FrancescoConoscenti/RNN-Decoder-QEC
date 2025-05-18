@@ -14,7 +14,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from typing import List
 
 class FullyConnectedNN(nn.Module):
-    def __init__(self, input_size, layers_sizes, hidden_size):
+    def __init__(self, input_size, layers_sizes, hidden_size, dropout_prob):
         super(FullyConnectedNN, self).__init__()
         
         layers = []
@@ -23,13 +23,17 @@ class FullyConnectedNN(nn.Module):
             layers.append(nn.Linear(input_size, hidden_size))
             # Define activation function (e.g., ReLU)
             layers.append(nn.ReLU())
+            layers.append(nn.Dropout(dropout_prob))
 
         else:
             layers.append(nn.Linear(input_size, layers_sizes[0]))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(dropout_prob))
             # Define hidden layers
             for i in range(len(layers_sizes) - 1):
                 layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
                 layers.append(nn.ReLU())
+                layers.append(nn.Dropout(dropout_prob))
             
             # Define output layer
             layers.append(nn.Linear(layers_sizes[-1], hidden_size))
@@ -109,7 +113,7 @@ class LatticeRNNCell(nn.Module):
         return hidden, cell
 
 class LatticeRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size, dropout_prob):
         """
         Network that processes inputs in a 2D lattice structure
         
@@ -136,7 +140,7 @@ class LatticeRNN(nn.Module):
         
         # Output layer
         #self.fc_out = nn.Linear(hidden_size, output_size)
-        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size, dropout_prob)
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, x, h_ext, c_ext, grid_states):
@@ -205,7 +209,7 @@ class LatticeRNN(nn.Module):
         return output, final_h, final_c, grid_states
 
 class BlockRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size, dropout_prob):
         """
         Block RNN model that processes multiple time steps of data on a 2D lattice
         
@@ -228,7 +232,7 @@ class BlockRNN(nn.Module):
         # Lattice RNN for spatial processing
         self.rnn_block = LatticeRNN(
             input_size, hidden_size, output_size, 
-            grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size
+            grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size, dropout_prob
         )
     
     def forward(self, x, num_rounds):
@@ -372,6 +376,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
             
             # Backward pass and optimize
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             
             running_loss += loss.item()
@@ -551,7 +556,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     print(f"Rank {rank} | Sum: {tensor.item()}")
 
     # Unpack parameters
-    num_epochs, num_epochs, rounds, learning_rate, learning_rate_fine, batch_size = train_param
+    num_epochs, num_epochs, rounds, learning_rate, learning_rate_fine, batch_size, dropout_prob = train_param
     detection_array_ordered, observable_flips, detection_array_ordered_exp, observable_flips_exp, test_size = dataset
     input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out = Net_Arch
 
@@ -568,7 +573,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     # Model
     gpu = torch.device("cuda")
     model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width,
-                     fc_layers_intra, fc_layers_out, batch_size).to(gpu)
+                     fc_layers_intra, fc_layers_out, batch_size, dropout_prob).to(gpu)
     ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])
 
     # Loss and optimizer
@@ -624,8 +629,9 @@ if __name__ == "__main__":
     grid_width = 2
     batch_size = 512
     test_size = 0.2
-    learning_rate = 0.001
+    learning_rate = 0.0005
     learning_rate_fine = 0.0001
+    dropout_prob = 0.1
     num_epochs = 20
     num_epochs_fine = 5
     fc_layers_intra = [0]
@@ -634,7 +640,7 @@ if __name__ == "__main__":
     print(f"2D LSTM DDP")
     print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
-    print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
+    print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}, dropout_prob = {dropout_prob}")
 
     # World size and rank
     world_size = int(os.environ.get("WORLD_SIZE", os.environ.get("SLURM_NTASKS", 1)))
@@ -645,7 +651,7 @@ if __name__ == "__main__":
 
     # Run main function
     main(rank=rank, local_rank=local_rank,
-         train_param=(num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size),
+         train_param=(num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size, dropout_prob),
          dataset=(detection_array_ordered, observable_flips, 
                   detection_array_ordered_exp, observable_flips_exp, test_size),
          Net_Arch=(input_size, hidden_size, output_size, grid_height, grid_width,
