@@ -562,13 +562,14 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
 
     # Adapt data topology
     detection_array_2D = detection_array_ordered.reshape(-1, rounds, grid_height, grid_width)
+    detection_array_2D_exp = detection_array_ordered_exp.reshape(-1, rounds, grid_height, grid_width)
 
     # Data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
         detection_array_2D, observable_flips, batch_size, test_size)
     
     train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
-    detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
+        detection_array_2D_exp, observable_flips_exp, batch_size, test_size)
 
     # Model
     gpu = torch.device("cuda")
@@ -589,6 +590,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
 
     # Evaluate
     accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
+    accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader_exp, rounds)
 
 
 if __name__ == "__main__":
