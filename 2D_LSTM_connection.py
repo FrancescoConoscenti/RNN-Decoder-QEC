@@ -585,12 +585,12 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
      #finetuning
-    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
-    finetune(rank, ddp_model.module, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
+    #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
+    #finetune(rank, ddp_model.module, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
 
     # Evaluate
     accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
-    accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader_exp, rounds)
+    #accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader_exp, rounds)
 
 
 if __name__ == "__main__":
@@ -598,8 +598,8 @@ if __name__ == "__main__":
 
     # Configuration
     distance = 3
-    rounds = 5
-    num_shots = 5000
+    rounds = 11
+    num_shots = 5000000
 
     if distance == 3:
         num_qubits = 17
@@ -633,7 +633,7 @@ if __name__ == "__main__":
     test_size = 0.2
     learning_rate = 0.0005
     learning_rate_fine = 0.0001
-    dropout_prob = 0.1
+    dropout_prob = 0.2
     num_epochs = 20
     num_epochs_fine = 5
     fc_layers_intra = [0]
