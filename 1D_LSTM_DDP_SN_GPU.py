@@ -16,7 +16,7 @@ from typing import List
 
 
 class FullyConnectedNN(nn.Module):
-    def __init__(self, input_size, layers_sizes, hidden_size):
+    def __init__(self, input_size, layers_sizes, hidden_size, dropout_prob):
         super(FullyConnectedNN, self).__init__()
         
         layers = []
@@ -25,13 +25,18 @@ class FullyConnectedNN(nn.Module):
             layers.append(nn.Linear(input_size, hidden_size))
             # Define activation function (e.g., ReLU)
             layers.append(nn.ReLU())
+            layers.append(nn.Dropout(dropout_prob))  # Dropout after each hidden layer
 
         else:
+
             layers.append(nn.Linear(input_size, layers_sizes[0]))
+            layers.append(nn.ReLU())
+            layers.append(nn.Dropout(dropout_prob))  # Dropout after first layer
             # Define hidden layers
             for i in range(len(layers_sizes) - 1):
                 layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
                 layers.append(nn.ReLU())
+                layers.append(nn.Dropout(dropout_prob))  # Dropout after first layer
             
             # Define output layer
             layers.append(nn.Linear(layers_sizes[-1], hidden_size))
@@ -45,7 +50,7 @@ class FullyConnectedNN(nn.Module):
 
 
 class LatticeRNNCell(nn.Module):
-    def __init__(self, input_size, hidden_size, fc_layers, batch_size):
+    def __init__(self, input_size, hidden_size, fc_layers, batch_size, dropout_prob):
         """
         Custom RNN cell that processes inputs in a 2D lattice structure
         
@@ -64,8 +69,8 @@ class LatticeRNNCell(nn.Module):
         
         # Process combined hidden states 
         # (precedent chain element and previous in time so input dim = hidden_size*2)
-        self.hidden_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
-        self.cell_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
+        self.hidden_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size, dropout_prob)
+        self.cell_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size, dropout_prob)
         
         # LSTM cell for time dimension
         self.lstm_cell = nn.LSTMCell(input_size, hidden_size)
@@ -112,7 +117,7 @@ class LatticeRNNCell(nn.Module):
         return hidden, cell
 
 class LatticeRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, length, fc_layers_intra, fc_layers_out, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, length, fc_layers_intra, fc_layers_out, batch_size, dropout_prob):
         """
         Network that processes inputs in a 2D lattice structure
         
@@ -132,7 +137,7 @@ class LatticeRNN(nn.Module):
         
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
-            LatticeRNNCell(input_size, hidden_size, fc_layers_intra, batch_size) 
+            LatticeRNNCell(input_size, hidden_size, fc_layers_intra, batch_size, dropout_prob) 
             for _ in range(self.chain_length)
         ])
         
@@ -198,7 +203,7 @@ class LatticeRNN(nn.Module):
         return output, final_h, final_c, chain_states
 
 class BlockRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size):
+    def __init__(self, input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size, dropout_prob):
         """
         Block RNN model that processes multiple time steps of data on a 2D lattice
         
@@ -220,7 +225,8 @@ class BlockRNN(nn.Module):
         self.fc_in = nn.Linear(input_size, input_size)
         
         # Lattice RNN for spatial processing
-        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra,fc_layers_out, batch_size)
+        self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length,
+                                     fc_layers_intra,fc_layers_out, batch_size, dropout_prob)
     
     def forward(self, x, num_rounds):
         """
@@ -573,7 +579,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
     print(f"Rank {rank} | Sum: {tensor.item()}")  # Should print "2.0" (1+1)
 
-    num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size = train_param
+    num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size, dropout_prob = train_param
     detection_array_ordered, observable_flips,  detection_array_ordered_exp, observable_flips_exp, test_size = dataset
     input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out = Net_Arch
 
@@ -589,7 +595,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
-                     fc_layers_out, batch_size). to(gpu)
+                     fc_layers_out, batch_size, dropout_prob). to(gpu)
     ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])# if torch.cuda.is_available() else None)
 
     #train
@@ -599,13 +605,13 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
     #finetuning
-    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
-    finetune(rank, ddp_model.module, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
+    #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
+    #finetune(rank, ddp_model.module, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
 
 
     # Evaluate model
-    #accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
-    accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader_exp, rounds)
+    accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader, rounds)
+    #accuracy, predictions = evaluate_model(rank, ddp_model.module, test_loader_exp, rounds)
 
 
 
@@ -615,7 +621,7 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 5
+    rounds = 17
     num_shots = 5000
 
     # Determine system size based on distance
@@ -642,11 +648,12 @@ if __name__ == "__main__":
     hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
-    batch_size = 512
+    batch_size = 256
     test_size = 0.2
-    learning_rate = 0.001
+    learning_rate = 0.0005
     learning_rate_fine = 0.0001
-    num_epochs = 30
+    dropout_prob = 0.2
+    num_epochs = 20
     num_epochs_fine = 5
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/8)]
@@ -655,7 +662,7 @@ if __name__ == "__main__":
     print(f"1D LSTM DDP")
     print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
-    print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
+    print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}, dropout_prob={dropout_prob}")
 
     #world_size = torch.cuda.device_count()
     #world_size = int(os.environ.get("WORLD_SIZE", 1))  # Changed: Use environment variable
@@ -677,7 +684,7 @@ if __name__ == "__main__":
 
     # For SLURM launches
     main(rank=rank, local_rank=local_rank,
-        train_param=(num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size),
+        train_param=(num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size, dropout_prob),
         dataset=(detection_array_ordered, observable_flips, detection_array_ordered_exp, observable_flips_exp, test_size),
         Net_Arch=(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
         world_size=world_size)
