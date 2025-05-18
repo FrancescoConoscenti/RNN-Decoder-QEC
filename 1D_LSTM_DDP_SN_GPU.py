@@ -142,7 +142,7 @@ class LatticeRNN(nn.Module):
         ])
         
         # Output layer
-        self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size, dropout_prob)
         self.bn = nn.BatchNorm1d(output_size)
         self.sigmoid = nn.Sigmoid()
     
