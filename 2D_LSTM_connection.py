@@ -598,8 +598,8 @@ if __name__ == "__main__":
 
     # Configuration
     distance = 3
-    rounds = 11
-    num_shots = 5000000
+    rounds = 17
+    num_shots = 4000000
 
     if distance == 3:
         num_qubits = 17
