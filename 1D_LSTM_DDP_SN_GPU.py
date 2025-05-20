@@ -13,6 +13,7 @@ from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data.distributed import DistributedSampler
 import time
 from typing import List
+from torch.optim import AdamW
 
 
 class FullyConnectedNN(nn.Module):
@@ -23,6 +24,7 @@ class FullyConnectedNN(nn.Module):
 
         if layers_sizes == [0]:
             layers.append(nn.Linear(input_size, hidden_size))
+            layers.append(nn.LayerNorm(hidden_size))  
             # Define activation function (e.g., ReLU)
             layers.append(nn.ReLU())
             layers.append(nn.Dropout(dropout_prob))  # Dropout after each hidden layer
@@ -30,16 +32,19 @@ class FullyConnectedNN(nn.Module):
         else:
 
             layers.append(nn.Linear(input_size, layers_sizes[0]))
+            layers.append(nn.LayerNorm(layers_sizes[0])) 
             layers.append(nn.ReLU())
             layers.append(nn.Dropout(dropout_prob))  # Dropout after first layer
             # Define hidden layers
             for i in range(len(layers_sizes) - 1):
                 layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+                layers.append(nn.LayerNorm(layers_sizes[i + 1])) 
                 layers.append(nn.ReLU())
                 layers.append(nn.Dropout(dropout_prob))  # Dropout after first layer
             
             # Define output layer
             layers.append(nn.Linear(layers_sizes[-1], hidden_size))
+            layers.append(nn.LayerNorm(hidden_size))  
 
 
         # Combined sequential model
@@ -602,7 +607,8 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     #train
     # Define loss function and optimizer
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
+    optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
+    #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
     #finetuning
@@ -623,7 +629,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 17
-    num_shots = 5000000
+    num_shots = 2000000
 
     # Determine system size based on distance
     if distance == 3:
@@ -646,14 +652,14 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 128
+    hidden_size = 256
     output_size = 1
     chain_length = num_ancilla_qubits
-    batch_size = 256
+    batch_size = 128
     test_size = 0.2
-    learning_rate = 0.0005
+    learning_rate = 0.001
     learning_rate_fine = 0.0001
-    dropout_prob = 0.2
+    dropout_prob = 0.1
     num_epochs = 20
     num_epochs_fine = 5
     fc_layers_intra = [0]

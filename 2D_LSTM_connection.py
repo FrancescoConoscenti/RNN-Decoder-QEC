@@ -12,6 +12,7 @@ import torch.optim as optim
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from typing import List
+from torch.optim import AdamW
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size, dropout_prob):
@@ -21,22 +22,28 @@ class FullyConnectedNN(nn.Module):
 
         if layers_sizes == [0]:
             layers.append(nn.Linear(input_size, hidden_size))
+            layers.append(nn.LayerNorm(hidden_size))  
             # Define activation function (e.g., ReLU)
             layers.append(nn.ReLU())
-            layers.append(nn.Dropout(dropout_prob))
+            layers.append(nn.Dropout(dropout_prob))  # Dropout after each hidden layer
 
         else:
+
             layers.append(nn.Linear(input_size, layers_sizes[0]))
+            layers.append(nn.LayerNorm(layers_sizes[0])) 
             layers.append(nn.ReLU())
-            layers.append(nn.Dropout(dropout_prob))
+            layers.append(nn.Dropout(dropout_prob))  # Dropout after first layer
             # Define hidden layers
             for i in range(len(layers_sizes) - 1):
                 layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
+                layers.append(nn.LayerNorm(layers_sizes[i + 1])) 
                 layers.append(nn.ReLU())
-                layers.append(nn.Dropout(dropout_prob))
+                layers.append(nn.Dropout(dropout_prob))  # Dropout after first layer
             
             # Define output layer
             layers.append(nn.Linear(layers_sizes[-1], hidden_size))
+            layers.append(nn.LayerNorm(hidden_size))  
+
 
 
         # Combined sequential model
@@ -579,7 +586,8 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
 
     # Loss and optimizer
     criterion = nn.BCELoss()
-    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
+    #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
+    optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
 
     # Train
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
@@ -598,8 +606,8 @@ if __name__ == "__main__":
 
     # Configuration
     distance = 3
-    rounds = 11
-    num_shots = 5000000
+    rounds = 17
+    num_shots = 2000000
 
     if distance == 3:
         num_qubits = 17
@@ -625,13 +633,13 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 128
+    hidden_size = 256
     output_size = 1
     grid_height = 4
     grid_width = 2
-    batch_size = 512
+    batch_size = 128
     test_size = 0.2
-    learning_rate = 0.0005
+    learning_rate = 0.001
     learning_rate_fine = 0.0001
     dropout_prob = 0.2
     num_epochs = 20
