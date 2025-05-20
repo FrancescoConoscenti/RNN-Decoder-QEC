@@ -556,7 +556,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     print(f"Rank {rank} | Sum: {tensor.item()}")
 
     # Unpack parameters
-    num_epochs, num_epochs, rounds, learning_rate, learning_rate_fine, batch_size, dropout_prob = train_param
+    num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size, dropout_prob = train_param
     detection_array_ordered, observable_flips, detection_array_ordered_exp, observable_flips_exp, test_size = dataset
     input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out = Net_Arch
 
@@ -584,7 +584,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     # Train
     train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
 
-     #finetuning
+    #finetuning
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
     #finetune(rank, ddp_model.module, train_loader_exp, criterion, optimizer, num_epochs_fine, rounds)
 
@@ -598,8 +598,8 @@ if __name__ == "__main__":
 
     # Configuration
     distance = 3
-    rounds = 17
-    num_shots = 4000000
+    rounds = 11
+    num_shots = 5000000
 
     if distance == 3:
         num_qubits = 17
