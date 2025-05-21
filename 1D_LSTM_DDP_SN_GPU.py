@@ -613,11 +613,11 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out = Net_Arch
 
     # Create data loaders
-    train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
+    train_loader, test_loader, X_train, X_test, y_train, y_test, train_sampler = create_data_loaders(
     detection_array_ordered, observable_flips, batch_size, test_size)
 
-    train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp, train_sampler = create_data_loaders(
-    detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
+    #train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp, train_sampler = create_data_loaders(
+    #detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
 
     torch.cuda.set_device(local_rank)
     gpu = torch.device("cuda")
