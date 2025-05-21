@@ -164,7 +164,7 @@ class LatticeRNN(nn.Module):
         
         # Output layer
         self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size, dropout_prob)
-        self.input_residual_proj = nn.Linear(input_size*8, hidden_size*2)
+        self.input_residual_proj = nn.Linear(input_size * self.chain_length, hidden_size*2)
         #self.bn = nn.BatchNorm1d(output_size)
         #self.sigmoid = nn.Sigmoid()
     
@@ -664,7 +664,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 20000
+    num_shots = 2000
 
     # Determine system size based on distance
     if distance == 3:
@@ -687,7 +687,7 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 256
+    hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
     batch_size = 128
@@ -695,7 +695,7 @@ if __name__ == "__main__":
     learning_rate = 0.001
     learning_rate_fine = 0.0001
     dropout_prob = 0.1
-    num_epochs = 15
+    num_epochs = 20
     num_epochs_fine = 5
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/8)]
