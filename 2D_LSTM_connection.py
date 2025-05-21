@@ -682,7 +682,7 @@ if __name__ == "__main__":
     grid_width = 2
     batch_size = 128
     test_size = 0.2
-    learning_rate = 0.0001
+    learning_rate = 0.005
     learning_rate_fine = 0.0001
     dropout_prob = 0.2
     num_epochs = 10
