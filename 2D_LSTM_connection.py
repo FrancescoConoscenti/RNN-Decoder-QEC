@@ -421,7 +421,7 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
             running_loss += loss.item()
 
         # Step the scheduler once per epoch
-        scheduler.step()
+        scheduler.step(running_loss)
         # Calculate average loss for this epoch
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
