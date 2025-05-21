@@ -406,6 +406,11 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
             # Backward pass and optimize
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            #gradient logging
+            for name, param in model.named_parameters():
+                if param.grad is not None:
+                    print(f"{name}: {param.grad.abs().mean()}")
+            
             optimizer.step()
             
             running_loss += loss.item()
@@ -657,7 +662,7 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 1024
+    hidden_size = 512
     output_size = 1
     grid_height = 4
     grid_width = 2
@@ -665,7 +670,7 @@ if __name__ == "__main__":
     test_size = 0.2
     learning_rate = 0.0001
     learning_rate_fine = 0.0001
-    dropout_prob = 0.0
+    dropout_prob = 0.2
     num_epochs = 5
     num_epochs_fine = 5
     fc_layers_intra = [0]
