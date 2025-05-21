@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data.distributed import DistributedSampler
 import torch.multiprocessing as mp
 import torch.optim as optim
 import torch.distributed as dist
@@ -279,7 +280,7 @@ class BlockRNN(nn.Module):
         
         return output, h_ext
 
-def create_data_loaders(detection_array, observable_flips, batch_size, test_size=0.2):
+def create_data_loaders(detection_array, observable_flips, batch_size, world_size, rank, test_size=0.2,):
     """
     Create PyTorch DataLoaders for training and testing
     
@@ -312,12 +313,15 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     # Create datasets
     train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
     test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
-    
+
+    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=4, pin_memory=True,)
     # Create data loaders
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=True
-    )
+        shuffle=False, drop_last=True)
+    
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, 
         shuffle=False, drop_last=True
@@ -367,6 +371,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
     losses = []
     
     for epoch in range(num_epochs):
+        #train_sampler.set_epoch(epoch)
         running_loss = 0.0
         
         for batch_x, batch_y in train_loader:
@@ -573,10 +578,10 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
 
     # Data loaders
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
-        detection_array_2D, observable_flips, batch_size, test_size)
+        detection_array_2D, observable_flips, batch_size, world_size, rank, test_size)
     
-    train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
-        detection_array_2D_exp, observable_flips_exp, batch_size, test_size)
+    #train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
+    #   detection_array_2D_exp, observable_flips_exp, batch_size, test_size, world_size, rank)
 
     # Model
     gpu = torch.device("cuda")
@@ -607,7 +612,7 @@ if __name__ == "__main__":
     # Configuration
     distance = 3
     rounds = 17
-    num_shots = 2000000
+    num_shots = 2000
 
     if distance == 3:
         num_qubits = 17
@@ -639,9 +644,9 @@ if __name__ == "__main__":
     grid_width = 2
     batch_size = 128
     test_size = 0.2
-    learning_rate = 0.001
+    learning_rate = 0.0001
     learning_rate_fine = 0.0001
-    dropout_prob = 0.2
+    dropout_prob = 0.0
     num_epochs = 20
     num_epochs_fine = 5
     fc_layers_intra = [0]
