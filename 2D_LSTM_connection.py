@@ -630,7 +630,9 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     criterion = nn.BCELoss()
     optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
     #optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
+    #scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
+
 
     # Train
     train_model(rank, ddp_model, train_loader, train_sampler, criterion, optimizer, scheduler, num_epochs, rounds)
@@ -682,7 +684,7 @@ if __name__ == "__main__":
     grid_width = 2
     batch_size = 128
     test_size = 0.2
-    learning_rate = 0.005
+    learning_rate = 0.001
     learning_rate_fine = 0.0001
     dropout_prob = 0.2
     num_epochs = 10
