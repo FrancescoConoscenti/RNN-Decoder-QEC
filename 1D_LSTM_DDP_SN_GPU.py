@@ -215,9 +215,12 @@ class LatticeRNN(nn.Module):
         final_h, final_c = chain_states[-1]
         
         final = torch.cat((final_h, final_c), dim=1)
+
+        #skip connections
+        x_proj = nn.functional.linear(x.flatten(), torch.eye(self.hidden_size, x.size(1)))
         
         # Generate output
-        output = self.fc_out(final)
+        output = self.fc_out(final) + x_proj
         #output = self.bn(output)
         #output = self.sigmoid(output)
         
