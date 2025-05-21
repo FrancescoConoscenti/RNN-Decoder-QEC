@@ -682,7 +682,7 @@ if __name__ == "__main__":
     output_size = 1
     grid_height = 4
     grid_width = 2
-    batch_size = 128
+    batch_size = 64
     test_size = 0.2
     learning_rate = 0.001
     learning_rate_fine = 0.0001
