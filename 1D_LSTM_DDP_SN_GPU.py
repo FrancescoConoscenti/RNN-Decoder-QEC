@@ -14,6 +14,22 @@ from torch.utils.data.distributed import DistributedSampler
 import time
 from typing import List
 from torch.optim import AdamW
+import torch.nn.init as init
+
+
+def initialize_weights(m):
+    if isinstance(m, nn.Linear):
+        init.xavier_uniform_(m.weight)
+        if m.bias is not None:
+            init.zeros_(m.bias)
+    elif isinstance(m, nn.LSTMCell):
+        for name, param in m.named_parameters():
+            if 'weight_ih' in name:
+                init.xavier_uniform_(param.data)
+            elif 'weight_hh' in name:
+                init.orthogonal_(param.data)
+            elif 'bias' in name:
+                init.zeros_(param.data)
 
 
 class FullyConnectedNN(nn.Module):
@@ -307,16 +323,9 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
     
     # Create data loaders
-    train_sampler = DistributedSampler(
-        train_dataset,
-        num_replicas=world_size,
-        rank=rank,
-        shuffle=True  # Shuffle per epoch
-    ) if world_size > 1 else None
+    train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=False) if world_size > 1 else None
     
-    train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, pin_memory=True,
-        shuffle=False, drop_last=True, sampler=train_sampler)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, pin_memory=True, shuffle=False, drop_last=True, sampler=train_sampler)
     
     #I test only on the data in the first process
     if rank == 0:
@@ -347,7 +356,7 @@ def ddp_setup(rank, world_size):
     )
 
 
-def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rounds):
+def train_model(rank, model, train_loader, criterion, optimizer, scheduler, num_epochs, rounds):
     """
     Train the model
     
@@ -371,10 +380,11 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
     losses = []
     
     for epoch in range(num_epochs):
-        
         print(f"[GPU{rank}] | Epoch {epoch} ")
 
         running_loss = 0.0
+        grad_sum = 0.0
+        count = 0
         if hasattr(train_loader.sampler, 'set_epoch'):
             train_loader.sampler.set_epoch(epoch)
         
@@ -401,6 +411,12 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
 
+        #gradient logging
+        for name, param in model.named_parameters():
+            if param.grad is not None:
+                grad_sum += param.grad.abs().mean().item()
+                count += 1
+
         if rank == 0:
             ckp = model.module.state_dict()
             PATH = "checkpoint.pt"
@@ -408,7 +424,10 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, rou
             print(f"Epoch {epoch} | Training checkpoint saved at {PATH}")
 
 
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+        current_lr = scheduler.get_last_lr()[0]
+
+        print(f"Epoch [{epoch+1}/{num_epochs}], Avg gradient:{grad_sum / count:.6f}, lr: {current_lr:.5f}, Loss: {avg_loss:.5f}")
+    
     
     print("Training finished.")
 
@@ -601,15 +620,19 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, 
-                     fc_layers_out, batch_size, dropout_prob). to(gpu)
+                     fc_layers_out, batch_size, dropout_prob)
+    model.apply(initialize_weights)
+    model. to(gpu)
     ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])# if torch.cuda.is_available() else None)
 
     #train
     # Define loss function and optimizer
     criterion = nn.BCELoss()
     optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
-    train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
+
+    train_model(rank, ddp_model, train_loader, criterion, optimizer, scheduler, num_epochs, rounds)
 
     #finetuning
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
@@ -629,7 +652,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 17
-    num_shots = 2000000
+    num_shots = 20000
 
     # Determine system size based on distance
     if distance == 3:
@@ -660,7 +683,7 @@ if __name__ == "__main__":
     learning_rate = 0.001
     learning_rate_fine = 0.0001
     dropout_prob = 0.1
-    num_epochs = 20
+    num_epochs = 10
     num_epochs_fine = 5
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/8)]
