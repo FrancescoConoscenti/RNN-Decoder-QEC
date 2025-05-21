@@ -617,6 +617,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     for name, param in model.named_parameters():
         if param.grad is not None:
             print(name, param.mean().item(), param.std().item())
+
     model.to(gpu)
     ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])
 
@@ -672,7 +673,7 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 512
+    hidden_size = 256
     output_size = 1
     grid_height = 4
     grid_width = 2
