@@ -334,7 +334,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
         test_loader = None
     
     
-    return train_loader, test_loader, X_train, X_test, y_train, y_test
+    return train_loader, test_loader, X_train, X_test, y_train, y_test, train_sampler
 
 def ddp_setup(rank, world_size):
     
@@ -356,7 +356,7 @@ def ddp_setup(rank, world_size):
     )
 
 
-def train_model(rank, model, train_loader, criterion, optimizer, scheduler, num_epochs, rounds):
+def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, scheduler, num_epochs, rounds):
     """
     Train the model
     
@@ -381,6 +381,8 @@ def train_model(rank, model, train_loader, criterion, optimizer, scheduler, num_
     
     for epoch in range(num_epochs):
         print(f"[GPU{rank}] | Epoch {epoch} ")
+
+        train_sampler.set_epoch(epoch)
 
         running_loss = 0.0
         grad_sum = 0.0
@@ -614,7 +616,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
     detection_array_ordered, observable_flips, batch_size, test_size)
 
-    train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
+    train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp, train_sampler = create_data_loaders(
     detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
 
     torch.cuda.set_device(local_rank)
@@ -635,7 +637,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
 
-    train_model(rank, ddp_model, train_loader, criterion, optimizer, scheduler, num_epochs, rounds)
+    train_model(rank, ddp_model, train_loader, train_sampler, criterion, optimizer, scheduler, num_epochs, rounds)
 
     #finetuning
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
