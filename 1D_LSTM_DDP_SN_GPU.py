@@ -218,8 +218,8 @@ class LatticeRNN(nn.Module):
         
         # Generate output
         output = self.fc_out(final)
-        output = self.bn(output)
-        output = self.sigmoid(output)
+        #output = self.bn(output)
+        #output = self.sigmoid(output)
         
         return output, final_h, final_c, chain_states
 
