@@ -628,8 +628,8 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
 
     # Loss and optimizer
     criterion = nn.BCELoss()
-    #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
-    optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
+    optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
+    #optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
 
     # Train
