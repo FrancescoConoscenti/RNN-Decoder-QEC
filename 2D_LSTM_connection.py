@@ -425,9 +425,9 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
         # Calculate average loss for this epoch
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
-        print("Average gradient mean:", grad_sum / count)
-        
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+        current_lr = scheduler.get_last_lr()[0]
+
+        print(f"Epoch [{epoch+1}/{num_epochs}], Avg gradient:{grad_sum / count:.6f}, lr: {current_lr:.5f}, Loss: {avg_loss:.5f}")
     
     
     print("Training finished.")
@@ -462,7 +462,7 @@ def finetune(rank, model, train_loader_exp, criterion, optimizer, num_epochs_fin
         avg_loss = running_loss / len(train_loader_exp)
         losses.append(avg_loss)
 
-
+        
         print(f"Epoch [{epoch+1}/{num_epochs_fine}], Loss: {avg_loss:.4f}")
     
     print("Training finished.")
