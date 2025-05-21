@@ -366,7 +366,7 @@ def ddp_setup(rank, world_size):
     )
 
 
-def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, num_epochs, num_rounds, device='cuda'):
+def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, scheduler, num_epochs, num_rounds, device='cuda'):
     """
     Train the model
     
@@ -419,13 +419,16 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
 
             optimizer.step()
             running_loss += loss.item()
-        
+
+        # Step the scheduler once per epoch
+        scheduler.step()
         # Calculate average loss for this epoch
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
         print("Average gradient mean:", grad_sum / count)
         
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+    
     
     print("Training finished.")
     return model, losses
@@ -627,9 +630,10 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     criterion = nn.BCELoss()
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
     optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.5)
 
     # Train
-    train_model(rank, ddp_model, train_loader, train_sampler, criterion, optimizer, num_epochs, rounds)
+    train_model(rank, ddp_model, train_loader, train_sampler, criterion, optimizer, scheduler, num_epochs, rounds)
 
     #finetuning
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
