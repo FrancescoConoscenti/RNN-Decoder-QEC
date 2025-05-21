@@ -406,13 +406,22 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
             # Backward pass and optimize
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            
             #gradient logging
+            grad_sum = 0.0
+            count = 0
             for name, param in model.named_parameters():
                 if param.grad is not None:
-                    print(f"{name}: {param.grad.abs().mean()}")
+                    grad_sum += param.grad.abs().mean().item()
+                    count += 1
+            if count > 0:
+                grad_mean = grad_sum / count
+            else:
+                grad_mean = 0.0
+            print("Average gradient mean:", grad_mean)
             
+
             optimizer.step()
-            
             running_loss += loss.item()
         
         # Calculate average loss for this epoch
@@ -610,6 +619,9 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width,
                      fc_layers_intra, fc_layers_out, batch_size, dropout_prob)
     model.apply(initialize_weights)
+    
+    for name, param in model.named_parameters():
+        print(name, param.mean().item(), param.std().item())
     model.to(gpu)
     ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])
 
