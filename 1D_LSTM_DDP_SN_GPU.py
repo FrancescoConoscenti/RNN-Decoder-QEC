@@ -407,6 +407,8 @@ def train_model(rank, model, train_loader, criterion, optimizer, scheduler, num_
             
             running_loss += loss.item()
         
+        # Step the scheduler once per epoch
+        scheduler.step(running_loss)
         # Calculate average loss for this epoch
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
@@ -683,7 +685,7 @@ if __name__ == "__main__":
     learning_rate = 0.001
     learning_rate_fine = 0.0001
     dropout_prob = 0.1
-    num_epochs = 10
+    num_epochs = 15
     num_epochs_fine = 5
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/8)]
