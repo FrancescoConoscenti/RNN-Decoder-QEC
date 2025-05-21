@@ -324,7 +324,6 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     
     # Create data loaders
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=False) if world_size > 1 else None
-    
     train_loader = DataLoader(train_dataset, batch_size=batch_size, pin_memory=True, shuffle=False, drop_last=True, sampler=train_sampler)
     
     #I test only on the data in the first process
@@ -380,9 +379,10 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
     losses = []
     
     for epoch in range(num_epochs):
-        print(f"[GPU{rank}] | Epoch {epoch} ")
+        if train_sampler is not None:
+            train_sampler.set_epoch(epoch)
 
-        train_sampler.set_epoch(epoch)
+        print(f"[GPU{rank}] | Epoch {epoch} ")
 
         running_loss = 0.0
         grad_sum = 0.0
