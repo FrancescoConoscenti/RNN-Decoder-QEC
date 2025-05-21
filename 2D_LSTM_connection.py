@@ -631,7 +631,7 @@ if __name__ == "__main__":
     # Configuration
     distance = 3
     rounds = 17
-    num_shots = 2000
+    num_shots = 20000
 
     if distance == 3:
         num_qubits = 17
@@ -661,12 +661,12 @@ if __name__ == "__main__":
     output_size = 1
     grid_height = 4
     grid_width = 2
-    batch_size = 128
+    batch_size = 64
     test_size = 0.2
     learning_rate = 0.0001
     learning_rate_fine = 0.0001
     dropout_prob = 0.0
-    num_epochs = 20
+    num_epochs = 5
     num_epochs_fine = 5
     fc_layers_intra = [0]
     fc_layers_out = [hidden_size]
