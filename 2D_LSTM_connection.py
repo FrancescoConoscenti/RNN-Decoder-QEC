@@ -327,7 +327,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, world_siz
         shuffle=False, drop_last=True
     )
     
-    return train_loader, test_loader, X_train, X_test, y_train, y_test
+    return train_loader, test_loader, X_train, X_test, y_train, y_test, train_sampler
 
 def ddp_setup(rank, world_size):
     
@@ -349,7 +349,7 @@ def ddp_setup(rank, world_size):
     )
 
 
-def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num_rounds, device='cuda'):
+def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, num_epochs, num_rounds, device='cuda'):
     """
     Train the model
     
@@ -371,7 +371,7 @@ def train_model(rank, model, train_loader, criterion, optimizer, num_epochs, num
     losses = []
     
     for epoch in range(num_epochs):
-        #train_sampler.set_epoch(epoch)
+        train_sampler.set_epoch(epoch)
         running_loss = 0.0
         
         for batch_x, batch_y in train_loader:
@@ -577,7 +577,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     detection_array_2D_exp = detection_array_ordered_exp.reshape(-1, rounds, grid_height, grid_width)
 
     # Data loaders
-    train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
+    train_loader, test_loader, X_train, X_test, y_train, y_test, train_sampler= create_data_loaders(
         detection_array_2D, observable_flips, batch_size, world_size, rank, test_size)
     
     #train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
@@ -595,7 +595,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
 
     # Train
-    train_model(rank, ddp_model, train_loader, criterion, optimizer, num_epochs, rounds)
+    train_model(rank, ddp_model, train_loader, train_sampler criterion, optimizer, num_epochs, rounds)
 
     #finetuning
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
