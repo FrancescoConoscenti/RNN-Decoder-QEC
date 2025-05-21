@@ -331,18 +331,12 @@ def create_data_loaders(detection_array, observable_flips, batch_size, world_siz
     train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
     test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
 
+    #Create data loaders
     train_sampler = DistributedSampler(train_dataset, num_replicas=world_size, rank=rank, shuffle=True)
-
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=4, pin_memory=True,)
-    # Create data loaders
-    train_loader = DataLoader(
-        train_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, sampler=train_sampler, num_workers=world_size, pin_memory=True,)
+    #train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
     
-    test_loader = DataLoader(
-        test_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=True
-    )
+    test_loader = DataLoader(test_dataset, batch_size=batch_size,  shuffle=False, drop_last=True)
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test, train_sampler
 
