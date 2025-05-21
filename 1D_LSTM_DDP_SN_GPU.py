@@ -217,7 +217,7 @@ class LatticeRNN(nn.Module):
         final = torch.cat((final_h, final_c), dim=1)
 
         #skip connections
-        x_proj = nn.functional.linear(x.flatten(), torch.eye(self.hidden_size, x.size(1),  device=x.device))
+        x_proj = nn.functional.linear(x.flatten(), torch.eye(self.hidden_size, x.flatten.size(1),  device=x.device))
         
         # Generate output
         output = self.fc_out(final) + x_proj
