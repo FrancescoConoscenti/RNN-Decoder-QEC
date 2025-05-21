@@ -192,7 +192,7 @@ class LatticeRNN(nn.Module):
             
             # Get input for current cell
             cell_input = x[:, i].unsqueeze(1).unsqueeze(1)
-                
+                 
             #chain:states[i] has the h,c of the previous round, 
             #continuing the loop I overwrite element of chain_states with the h,c spatial
             h_time, c_time= chain_states[i]
