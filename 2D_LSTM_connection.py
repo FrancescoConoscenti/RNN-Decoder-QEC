@@ -406,7 +406,7 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
             # Backward pass and optimize
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-            
+
             #gradient logging
             grad_sum = 0.0
             count = 0
@@ -647,7 +647,7 @@ if __name__ == "__main__":
 
     # Configuration
     distance = 3
-    rounds = 17
+    rounds = 11
     num_shots = 20000
 
     if distance == 3:
