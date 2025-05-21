@@ -390,7 +390,10 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
     for epoch in range(num_epochs):
         train_sampler.set_epoch(epoch)
         running_loss = 0.0
-        
+
+        grad_sum = 0.0
+        count = 0
+
         for batch_x, batch_y in train_loader:
             # Move data to device
             batch_x = batch_x.to(device)
@@ -408,17 +411,10 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
             #gradient logging
-            grad_sum = 0.0
-            count = 0
             for name, param in model.named_parameters():
                 if param.grad is not None:
                     grad_sum += param.grad.abs().mean().item()
                     count += 1
-            if count > 0:
-                grad_mean = grad_sum / count
-            else:
-                grad_mean = 0.0
-            print("Average gradient mean:", grad_mean)
             
 
             optimizer.step()
@@ -427,6 +423,7 @@ def train_model(rank, model, train_loader, train_sampler, criterion, optimizer, 
         # Calculate average loss for this epoch
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
+        print("Average gradient mean:", grad_sum / count)
         
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
     
@@ -621,7 +618,8 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     model.apply(initialize_weights)
     
     for name, param in model.named_parameters():
-        print(name, param.mean().item(), param.std().item())
+        if param.grad is not None:
+            print(name, param.mean().item(), param.std().item())
     model.to(gpu)
     ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])
 
