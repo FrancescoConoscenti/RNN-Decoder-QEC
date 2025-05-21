@@ -595,7 +595,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
 
     # Train
-    train_model(rank, ddp_model, train_loader, train_sampler criterion, optimizer, num_epochs, rounds)
+    train_model(rank, ddp_model, train_loader, train_sampler, criterion, optimizer, num_epochs, rounds)
 
     #finetuning
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate_fine)
