@@ -645,7 +645,7 @@ if __name__ == "__main__":
 
     # Configuration
     distance = 3
-    rounds = 11
+    rounds = 17
     num_shots = 20000
 
     if distance == 3:
