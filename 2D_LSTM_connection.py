@@ -14,6 +14,23 @@ import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
 from typing import List
 from torch.optim import AdamW
+import torch.nn.init as init
+
+
+def initialize_weights(m):
+    if isinstance(m, nn.Linear):
+        init.xavier_uniform_(m.weight)
+        if m.bias is not None:
+            init.zeros_(m.bias)
+    elif isinstance(m, nn.LSTMCell):
+        for name, param in m.named_parameters():
+            if 'weight_ih' in name:
+                init.xavier_uniform_(param.data)
+            elif 'weight_hh' in name:
+                init.orthogonal_(param.data)
+            elif 'bias' in name:
+                init.zeros_(param.data)
+
 
 class FullyConnectedNN(nn.Module):
     def __init__(self, input_size, layers_sizes, hidden_size, dropout_prob):
@@ -586,7 +603,9 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     # Model
     gpu = torch.device("cuda")
     model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width,
-                     fc_layers_intra, fc_layers_out, batch_size, dropout_prob).to(gpu)
+                     fc_layers_intra, fc_layers_out, batch_size, dropout_prob)
+    model.apply(initialize_weights)
+    model.to(gpu)
     ddp_model = DDP(model, find_unused_parameters=True, device_ids=[local_rank])
 
     # Loss and optimizer
