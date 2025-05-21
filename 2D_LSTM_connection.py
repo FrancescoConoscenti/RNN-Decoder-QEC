@@ -657,7 +657,7 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 256
+    hidden_size = 1024
     output_size = 1
     grid_height = 4
     grid_width = 2
