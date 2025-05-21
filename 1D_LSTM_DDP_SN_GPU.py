@@ -613,7 +613,7 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
     # Verify communication
     tensor = torch.tensor([1.0]).cuda()
     dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
-    print(f"Rank {rank} | Sum: {tensor.item()}")  # Should print "2.0" (1+1)
+    print(f"Rank {rank} | Sum: {tensor.item()}") 
 
     num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size, dropout_prob = train_param
     detection_array_ordered, observable_flips,  detection_array_ordered_exp, observable_flips_exp, test_size = dataset
@@ -664,7 +664,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 2000
+    num_shots = 1000000
 
     # Determine system size based on distance
     if distance == 3:
@@ -715,15 +715,7 @@ if __name__ == "__main__":
     local_rank = int(os.environ.get('LOCAL_RANK', os.environ.get('SLURM_LOCALID')))
 
     start_time = time.time()
-
-    # Train model
-    """mp.spawn(main, args=((num_epochs, rounds, learning_rate, batch_size),
-                        (detection_array_ordered, observable_flips, test_size),
-                        (input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out),
-                         world_size),
-                         nprocs=world_size,join=True)"""
     
-
     # For SLURM launches
     main(rank=rank, local_rank=local_rank,
         train_param=(num_epochs, num_epochs_fine, rounds, learning_rate, learning_rate_fine, batch_size, dropout_prob),

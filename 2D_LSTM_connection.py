@@ -229,7 +229,7 @@ class LatticeRNN(nn.Module):
         
         # Generate output
         output = self.fc_out(final_h)
-        output = self.sigmoid(output)
+        #output = self.sigmoid(output)
         
         return output, final_h, final_c, grid_states
 
@@ -646,8 +646,8 @@ if __name__ == "__main__":
 
     # Configuration
     distance = 3
-    rounds = 17
-    num_shots = 20000
+    rounds = 11
+    num_shots = 1000000
 
     if distance == 3:
         num_qubits = 17
