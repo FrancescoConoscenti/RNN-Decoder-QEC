@@ -164,7 +164,7 @@ class LatticeRNN(nn.Module):
         
         # Output layer
         self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size, dropout_prob)
-        self.input_residual_proj = nn.Linear(input_size*8, hidden_size)
+        self.input_residual_proj = nn.Linear(input_size*8, hidden_size*2)
         #self.bn = nn.BatchNorm1d(output_size)
         #self.sigmoid = nn.Sigmoid()
     
@@ -214,15 +214,17 @@ class LatticeRNN(nn.Module):
         
         # Get final hidden state from bottom-right corner
         final_h, final_c = chain_states[-1]
-        
+               
         final = torch.cat((final_h, final_c), dim=1)
 
         #skip connections
         x = x.squeeze(1).float()  # or reshape appropriately
         x_proj = self.input_residual_proj(x)
+
+        final = final + x_proj
         
         # Generate output
-        output = self.fc_out(final) + x_proj
+        output = self.fc_out(final)
         #output = self.bn(output)
         #output = self.sigmoid(output)
         
