@@ -164,6 +164,7 @@ class LatticeRNN(nn.Module):
         
         # Output layer
         self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size, dropout_prob)
+        self.input_residual_proj = nn.Linear(input_size*8, hidden_size)
         #self.bn = nn.BatchNorm1d(output_size)
         #self.sigmoid = nn.Sigmoid()
     
@@ -217,7 +218,8 @@ class LatticeRNN(nn.Module):
         final = torch.cat((final_h, final_c), dim=1)
 
         #skip connections
-        x_proj = nn.functional.linear(x.flatten(), torch.eye(self.hidden_size, x.flatten.size(1),  device=x.device))
+        x = x.squeeze(1).float()  # or reshape appropriately
+        x_proj = self.input_residual_proj(x)
         
         # Generate output
         output = self.fc_out(final) + x_proj
