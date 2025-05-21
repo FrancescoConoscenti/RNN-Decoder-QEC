@@ -164,8 +164,8 @@ class LatticeRNN(nn.Module):
         
         # Output layer
         self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size, dropout_prob)
-        self.bn = nn.BatchNorm1d(output_size)
-        self.sigmoid = nn.Sigmoid()
+        #self.bn = nn.BatchNorm1d(output_size)
+        #self.sigmoid = nn.Sigmoid()
     
     def forward(self, x, h_ext, c_ext, chain_states):
         """
@@ -629,7 +629,8 @@ def main(rank, local_rank, train_param, dataset, Net_Arch, world_size):
 
     #train
     # Define loss function and optimizer
-    criterion = nn.BCELoss()
+    #criterion = nn.BCELoss()
+    criterion = nn.BCEWithLogitsLoss()
     optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-2)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
     #optimizer = optim.Adam(ddp_model.parameters(), lr=learning_rate)
