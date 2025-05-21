@@ -652,7 +652,7 @@ if __name__ == "__main__":
     # Configuration
     distance = 3
     rounds = 17
-    num_shots = 20000
+    num_shots = 200000
 
     if distance == 3:
         num_qubits = 17
@@ -682,9 +682,9 @@ if __name__ == "__main__":
     output_size = 1
     grid_height = 4
     grid_width = 2
-    batch_size = 64
+    batch_size = 128
     test_size = 0.2
-    learning_rate = 0.001
+    learning_rate = 0.0005
     learning_rate_fine = 0.0001
     dropout_prob = 0.2
     num_epochs = 10
