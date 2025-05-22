@@ -460,7 +460,7 @@ def main():
 
     distance = 3
     rounds = 11
-    num_shots = 100000
+    num_shots = 1000000
 
     # Configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -485,6 +485,7 @@ def main():
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
+    print(f"2D LSTM")
     print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
