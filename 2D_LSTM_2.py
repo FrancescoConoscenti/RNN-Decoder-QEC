@@ -457,8 +457,8 @@ def load_data(num_shots, rounds):
 def main():
 
     distance = 3
-    rounds = 5
-    num_shots = 10000
+    rounds = 17
+    num_shots = 2000000
 
     # Configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -472,7 +472,7 @@ def main():
     
     # Model hyperparameters - adjusted
     input_size = 1
-    hidden_size = 32  # Reduced size
+    hidden_size = 128  # Reduced size
     output_size = 1
     grid_height = 4
     grid_width = 2
