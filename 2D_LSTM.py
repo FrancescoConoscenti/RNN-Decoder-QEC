@@ -370,7 +370,7 @@ def train_model(model, train_loader, criterion, optimizer, scheduler, num_epochs
     print("Training finished.")
     return model, losses
 
-def evaluate_model(model, test_loader, num_rounds, device='cuda'):
+def evaluate_model(model, test_loader, num_rounds, device='cpu'):
     """
     Evaluate the model on test data
     
