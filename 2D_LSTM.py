@@ -79,6 +79,9 @@ class LatticeRNNCell(nn.Module):
         Returns:
             Tuple of (hidden_state, cell_state)
         """
+
+        device = x.device
+
         hidden_left, cell_left, hidden_up, cell_up, hidden_prev, cell_prev = hidden_states
         
         # Initialize missing hidden states with zeros if needed
