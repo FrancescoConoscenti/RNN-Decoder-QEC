@@ -384,7 +384,7 @@ def evaluate_model(model, test_loader, num_rounds, device='cuda'):
         accuracy: Test accuracy
         predictions: Model predictions
     """
-    #model.to(device)
+    model.to(device)
     model.eval()
     correct = 0
     total = 0
