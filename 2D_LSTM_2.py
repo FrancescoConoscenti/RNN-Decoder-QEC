@@ -303,7 +303,7 @@ def create_balanced_data_loader(X, y, batch_size, shuffle=True):
     else:
         return DataLoader(dataset, batch_size=batch_size, shuffle=False, drop_last=True)
 
-def train_model(model, train_loader, val_loader, lr, num_epochs, num_rounds, device='cuda', patience=5):
+def train_model(model, train_loader, val_loader, lr, num_epochs, num_rounds, patience=patience, device='cuda',):
     model.to(device)
     
     # Use focal loss for imbalanced data
@@ -472,14 +472,15 @@ def main():
     
     # Model hyperparameters - adjusted
     input_size = 1
-    hidden_size = 128  # Reduced size
+    hidden_size = 256  # Reduced size
     output_size = 1
     grid_height = 4
     grid_width = 2
     batch_size = 256  # Reduced batch size
     test_size = 0.2
     learning_rate = 0.001  # Increased learning rate
-    num_epochs = 20
+    patience = 2  # Early stopping patience
+    num_epochs = 30
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
@@ -507,7 +508,7 @@ def main():
     # Train model
     #model, losses = train_model(model, train_loader, criterion, optimizer, scheduler, num_epochs, rounds, device)
     model, train_losses, val_losses = train_model(model, train_loader, val_loader, learning_rate, 
-                                                            num_epochs, rounds, device=device)
+                                                            num_epochs, rounds, patience, device=device)
 
     # Evaluate model
     accuracy, predictions, recall, f1 = evaluation(model, test_loader, rounds, device)

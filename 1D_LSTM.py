@@ -540,7 +540,8 @@ if __name__ == "__main__":
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
-    num_epochs = 10
+    patience = 2
+    num_epochs = 20
     num_epochs_finetune = 1
     fc_layers_intra =[0]
     fc_layers_out = [int(hidden_size/8)]
@@ -567,7 +568,7 @@ if __name__ == "__main__":
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.5, patience=3, verbose=True)
+        optimizer, mode='min', factor=0.5, patience=patience, verbose=True)
 
     # Train model
     start_time = time.time()

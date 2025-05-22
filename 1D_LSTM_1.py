@@ -416,7 +416,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test
 
-def train_model(model, train_loader, criterion, optimizer, num_epochs, num_rounds, scheduler=None):
+def train_model(model, train_loader, criterion, optimizer, patience, num_epochs, num_rounds, scheduler=None):
     """
     Train the model with enhanced training loop
     
@@ -436,7 +436,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
     model.train()
     losses = []
     best_loss = float('inf')
-    patience = 3
+    patience = patience
     patience_counter = 0
     
     for epoch in range(num_epochs):
@@ -476,6 +476,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
         
         # Learning rate scheduling
         scheduler.step(running_loss)
+        current_lr = optimizer.param_groups[0]['lr']
         
         # Early stopping check
         if avg_loss < best_loss:
@@ -484,7 +485,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
         else:
             patience_counter += 1
             
-        current_lr = optimizer.param_groups[0]['lr']
+        
         print(f"Epoch [{epoch+1}/{num_epochs}], LR: {current_lr}, Loss: {avg_loss:.4f}")
         
         # Early stopping
@@ -638,14 +639,15 @@ if __name__ == "__main__":
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.002
-    num_epochs = 10  # Increased for early stopping
+    patience = 2
+    num_epochs = 20  # Increased for early stopping
     num_epochs_finetune = 5
     fc_layers_intra = [0]
     fc_layers_out = [int(hidden_size/4)]  # Slightly larger for better capacity
     dropout_rate = 0.1
 
     # Print configuration
-    print(f"Enhanced 1D LSTM with Modern Techniques")
+    print(f"1D LSTM_1")
     print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
     print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
     print(f"FC layers: intra={fc_layers_intra}, out={fc_layers_out}, dropout={dropout_rate}")
@@ -676,12 +678,12 @@ if __name__ == "__main__":
     
     # Learning rate scheduler
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode='min', factor=0.5, patience=3, verbose=True
+        optimizer, mode='min', factor=0.5, patience=patience, verbose=True
     )
 
     # Train model
     start_time = time.time()
-    model, losses = train_model(model, train_loader, criterion, optimizer, 
+    model, losses = train_model(model, train_loader, criterion, optimizer, patience,
                                num_epochs, rounds, scheduler)
     end_time = time.time()
 
@@ -690,8 +692,8 @@ if __name__ == "__main__":
         print("\nStarting fine-tuning on experimental data...")
         optimizer_ft = optim.AdamW(model.parameters(), lr=learning_rate/10, weight_decay=1e-5)
         scheduler_ft = optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer_ft, mode='min', factor=0.7, patience=2, verbose=True
-        )
+            optimizer_ft, mode='min', factor=0.7, patience=patience, verbose=True)
+
         model, losses_ft = train_model(model, train_loader_exp, criterion, optimizer_ft, 
                                       num_epochs_finetune, rounds, scheduler_ft)
 
