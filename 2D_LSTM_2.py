@@ -72,9 +72,7 @@ class ImprovedLatticeRNNCell(nn.Module):
         # Process spatial neighbors
         if hidden_left is not None and hidden_up is not None:
             spatial_input = torch.stack([hidden_left, hidden_up], dim=1)  # [batch, 2, hidden]
-            spatial_processed, _ = self.spatial_attention(
-                spatial_input, spatial_input, spatial_input
-            )
+            spatial_processed, _ = self.spatial_attention(spatial_input, spatial_input, spatial_input)
             spatial_combined = spatial_processed.mean(dim=1)  # Average attention output
         else:
             spatial_combined = torch.zeros(batch_size, self.hidden_size, device=device)
@@ -305,17 +303,17 @@ def create_balanced_data_loader(X, y, batch_size, shuffle=True):
     else:
         return DataLoader(dataset, batch_size=batch_size, shuffle=False, drop_last=True)
 
-def train_model(model, train_loader, val_loader, num_epochs, num_rounds, device='cuda', patience=5):
+def train_model(model, train_loader, val_loader, lr, num_epochs, num_rounds, device='cuda', patience=5):
     model.to(device)
     
     # Use focal loss for imbalanced data
     criterion = FocalLoss(alpha=0.25, gamma=2.0)
     
     # Use AdamW with weight decay
-    optimizer = optim.AdamW(model.parameters(), lr=0.003, weight_decay=1e-4)
+    optimizer = optim.AdamW(model.parameters(), lr = lr, weight_decay=1e-4)
     
     # Cosine annealing scheduler
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau( optimizer, mode='min', factor=0.5, patience = patience, verbose=True)
     
     best_val_loss = float('inf')
     patience_counter = 0
@@ -505,14 +503,10 @@ def main():
     
     print(f"Model has {sum(p.numel() for p in model.parameters())} parameters")
     
-    # Use BCEWithLogitsLoss instead of BCELoss (more numerically stable)
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=1e-4)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau( optimizer, mode='min', factor=0.5, patience=3, verbose=True)
-
+    
     # Train model
     #model, losses = train_model(model, train_loader, criterion, optimizer, scheduler, num_epochs, rounds, device)
-    model, train_losses, val_losses = train_model(model, train_loader, val_loader, 
+    model, train_losses, val_losses = train_model(model, train_loader, val_loader, learning_rate, 
                                                             num_epochs, rounds, device=device)
 
     # Evaluate model
