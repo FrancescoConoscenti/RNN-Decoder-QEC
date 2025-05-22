@@ -100,13 +100,13 @@ class LatticeRNNCell(nn.Module):
         # Combine hidden states from different directions
         combined_h = torch.cat((hidden_left, hidden_up, hidden_prev), dim=1)
         combined_c = torch.cat((cell_left, cell_up, cell_prev), dim=1)
-
-        combined_h = combined_h.to(device)
-        combined_c = combined_c.to(device)
         
         # Process combined hidden states
         processed_h = self.hidden_processor(combined_h)
         processed_c = self.cell_processor(combined_c)
+
+        processed_h = processed_h.to(device)
+        processed_c = processed_c.to(device)
         
         # Update hidden state using LSTM cell
         x = x.squeeze(1).float()
