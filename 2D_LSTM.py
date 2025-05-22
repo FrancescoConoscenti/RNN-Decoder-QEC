@@ -91,6 +91,8 @@ class LatticeRNNCell(nn.Module):
 
         # Also ensure hidden_prev and cell_prev are on the same device
         hidden_prev = hidden_prev.to(device)
+        hidden_up = hidden_up.to(device)
+        hidden_left = hidden_left.to(device)
         cell_prev = cell_prev.to(device)
             
         # Combine hidden states from different directions
