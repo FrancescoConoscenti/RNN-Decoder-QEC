@@ -374,7 +374,7 @@ def evaluate_model(model, test_loader, num_rounds, device='cuda'):
         accuracy: Test accuracy
         predictions: Model predictions
     """
-    model.to(device)
+    #model.to(device)
     model.eval()
     correct = 0
     total = 0
@@ -473,13 +473,13 @@ observable_flips = observable_flips.astype(int).flatten().tolist()
 
 # Model hyperparameters
 input_size = 1
-hidden_size = 64
+hidden_size = 128
 output_size = 1
 grid_height = 4
 grid_width = 2
-batch_size = 256
+batch_size = 128
 test_size = 0.2
-learning_rate = 0.002
+learning_rate = 0.0005
 num_epochs = 20
 fc_layers_intra = [0] #not used
 fc_layers_out = [hidden_size]
