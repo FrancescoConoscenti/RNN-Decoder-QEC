@@ -479,11 +479,11 @@ observable_flips = observable_flips.astype(int).flatten().tolist()
 
 # Model hyperparameters
 input_size = 1
-hidden_size = 64
+hidden_size = 32
 output_size = 1
 grid_height = 4
 grid_width = 2
-batch_size = 256
+batch_size = 128
 test_size = 0.2
 learning_rate = 0.0001
 num_epochs = 20
