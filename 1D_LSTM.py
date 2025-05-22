@@ -57,8 +57,6 @@ class LatticeRNNCell(nn.Module):
         self.hidden_size = hidden_size
         self.batch_size = batch_size
         
-        # Process input
-        self.fc_input = nn.Linear(input_size, input_size)
         
         # Process combined hidden states 
         # (precedent chain element and previous in time so input dim = hidden_size*2)
@@ -213,9 +211,6 @@ class BlockRNN(nn.Module):
         self.hidden_size = hidden_size
         self.batch_size = batch_size
         self.chain_length = chain_length
-        
-        # Input processing
-        self.fc_in = nn.Linear(input_size, input_size)
         
         # Lattice RNN for spatial processing
         self.rnn_block = LatticeRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra,fc_layers_out, batch_size)

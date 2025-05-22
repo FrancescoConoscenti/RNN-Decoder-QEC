@@ -104,22 +104,6 @@ class EnhancedLatticeRNN(nn.Module):
             for _ in range(grid_height * grid_width)
         ])
         
-        # Global context aggregation
-        self.global_attention = nn.MultiheadAttention(
-            embed_dim=hidden_size,
-            num_heads=4,
-            dropout=dropout_rate,
-            batch_first=True
-        )
-        
-        # Output processing with residual connection
-        self.output_processor = nn.Sequential(
-            nn.Linear(hidden_size, hidden_size // 2),
-            nn.LayerNorm(hidden_size // 2),
-            nn.ReLU(),
-            nn.Dropout(dropout_rate),
-            nn.Linear(hidden_size // 2, hidden_size),
-)
         
     def forward(self, x, h_ext, grid_states):
         batch_size = x.size(0)
@@ -146,23 +130,17 @@ class EnhancedLatticeRNN(nn.Module):
         
         # Global attention over all cell states
         hidden_stack = torch.stack(all_hidden_states, dim=1)  # [batch, num_cells, hidden]
-        global_context, _ = self.global_attention(hidden_stack, hidden_stack, hidden_stack)
         
-        # Use mean of global context for final prediction
-        final_representation = global_context.mean(dim=1)
-        
-        # Generate output
-        output = self.output_processor(final_representation)
-        
-        return output, grid_states[-1][-1], grid_states
+        return hidden_stack, grid_states[-1][-1], grid_states
 
 class AdvancedBlockRNN(nn.Module):
-    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, 
-                 dropout_rate=0.3):
+    def __init__(self, input_size, hidden_size, output_size, grid_height, grid_width, num_rounds, 
+                 dropout_rate):
         super(AdvancedBlockRNN, self).__init__()
         self.hidden_size = hidden_size
         self.grid_height = grid_height
         self.grid_width = grid_width
+        self.num_rounds = num_rounds
         
         # Temporal LSTM for processing sequences
         self.temporal_lstm = nn.LSTM(
@@ -188,6 +166,23 @@ class AdvancedBlockRNN(nn.Module):
             nn.Linear(hidden_size, output_size)
         )
         
+        # Global context aggregation
+        self.global_attention = nn.MultiheadAttention(
+            embed_dim=hidden_size,
+            num_heads=4,
+            dropout=dropout_rate,
+            batch_first=True
+        )
+
+        # Output processing with residual connection
+        self.output_processor = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size // 2),
+            nn.LayerNorm(hidden_size // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            nn.Linear(hidden_size // 2, hidden_size),
+        )
+        
     def forward(self, x, num_rounds):
         batch_size = x.size(0)
         device = x.device
@@ -201,12 +196,18 @@ class AdvancedBlockRNN(nn.Module):
         h_ext = torch.zeros(batch_size, self.hidden_size, device=device)
         grid_states = [[h_ext.clone() for _ in range(self.grid_width)] 
                       for _ in range(self.grid_height)]
-        
-        final_spatial_input = x[:, -1, :, :]  # Last round
-        spatial_out, _, _ = self.spatial_rnn(final_spatial_input, h_ext, grid_states)
-        
+
+        for i in range(self.num_rounds):
+            spatial_input = x[:, i, :, :]  # Last round
+            hidden_stack, last_hidden, grid_states = self.spatial_rnn(spatial_input, h_ext, grid_states)
+            h_ext = last_hidden  # Use last hidden state as external state for next round
+
+        global_context, _ = self.global_attention(hidden_stack, hidden_stack, hidden_stack)
+        final_representation = global_context.mean(dim=1)
+        output = self.output_processor(final_representation)
+
         # Fusion
-        combined = torch.cat([temporal_final, spatial_out], dim=1)
+        combined = torch.cat([temporal_final, output], dim=1)
         output = self.fusion(combined)
         
         return output, temporal_final
@@ -458,7 +459,7 @@ def main():
 
     distance = 3
     rounds = 5
-    num_shots = 10000
+    num_shots = 100000
 
     # Configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -476,11 +477,11 @@ def main():
     output_size = 1
     grid_height = 4
     grid_width = 2
-    batch_size = 256  # Reduced batch size
+    batch_size = 32 # Reduced batch size
     test_size = 0.2
     learning_rate = 0.001  # Increased learning rate
     patience = 2  # Early stopping patience
-    num_epochs = 30
+    num_epochs = 1
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
@@ -500,7 +501,7 @@ def main():
     # Create model with improvements
     # Create model
     model = AdvancedBlockRNN(input_size, hidden_size, output_size, 
-                            grid_height, grid_width, dropout_rate).to(device)
+                            grid_height, grid_width, rounds, dropout_rate).to(device)
     
     print(f"Model has {sum(p.numel() for p in model.parameters())} parameters")
     
