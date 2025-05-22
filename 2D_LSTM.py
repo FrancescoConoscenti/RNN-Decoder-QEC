@@ -94,6 +94,8 @@ class LatticeRNNCell(nn.Module):
         hidden_up = hidden_up.to(device)
         hidden_left = hidden_left.to(device)
         cell_prev = cell_prev.to(device)
+        cell_up = cell_up.to(device)
+        cell_left = cell_left.to(device)
             
         # Combine hidden states from different directions
         combined_h = torch.cat((hidden_left, hidden_up, hidden_prev), dim=1)
