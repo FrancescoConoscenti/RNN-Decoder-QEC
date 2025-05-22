@@ -54,11 +54,15 @@ class LatticeRNNCell(nn.Module):
     def _initialize_weights(self):
         for name, param in self.named_parameters():
             if 'weight' in name:
-                if 'lstm' in name:
-                    # Initialize LSTM weights with Xavier/Glorot initialization
-                    nn.init.xavier_uniform_(param.data)
+                if param.dim() >= 2:  # Only apply to 2D+ tensors
+                    if 'lstm' in name:
+                        # Initialize LSTM weights with Xavier/Glorot initialization
+                        nn.init.xavier_uniform_(param.data)
+                    else:
+                        nn.init.kaiming_normal_(param.data, nonlinearity='relu')
                 else:
-                    nn.init.kaiming_normal_(param.data, nonlinearity='relu')
+                    # For 1D weight tensors (rare cases)
+                    nn.init.normal_(param.data, 0, 0.01)
             elif 'bias' in name:
                 nn.init.constant_(param.data, 0)
     
@@ -402,13 +406,13 @@ def main():
     
     # Model hyperparameters - adjusted
     input_size = 1
-    hidden_size = 32  # Reduced size
+    hidden_size = 64  # Reduced size
     output_size = 1
     grid_height = 4
     grid_width = 2
     batch_size = 128  # Reduced batch size
     test_size = 0.2
-    learning_rate = 0.001  # Increased learning rate
+    learning_rate = 0.0001  # Increased learning rate
     num_epochs = 20
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
@@ -438,7 +442,7 @@ def main():
     model, losses = train_model(model, train_loader, criterion, optimizer, scheduler, num_epochs, rounds, device)
 
     # Evaluate model
-    accuracy, predictions = evaluate_model(model, test_loader, rounds, device)
+    accuracy, predictions, all_outputs = evaluate_model(model, test_loader, rounds, device)
 
     
 if __name__ == "__main__":
