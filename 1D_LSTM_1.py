@@ -475,7 +475,7 @@ def train_model(model, train_loader, criterion, optimizer, patience, num_epochs,
         losses.append(avg_loss)
         
         # Learning rate scheduling
-        scheduler.step(running_loss)
+        scheduler.step(avg_loss)
         current_lr = optimizer.param_groups[0]['lr']
         
         # Early stopping check
@@ -489,9 +489,9 @@ def train_model(model, train_loader, criterion, optimizer, patience, num_epochs,
         print(f"Epoch [{epoch+1}/{num_epochs}], LR: {current_lr}, Loss: {avg_loss:.4f}")
         
         # Early stopping
-        if patience_counter >= patience and epoch > 10:
+        """if patience_counter >= patience and epoch > 10:
             print(f"Early stopping triggered after {epoch+1} epochs")
-            break
+            break"""
     
     print("Training finished.")
     return model, losses
@@ -638,7 +638,7 @@ if __name__ == "__main__":
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
-    learning_rate = 0.002
+    learning_rate = 0.001
     patience = 2
     num_epochs = 20  # Increased for early stopping
     num_epochs_finetune = 5
