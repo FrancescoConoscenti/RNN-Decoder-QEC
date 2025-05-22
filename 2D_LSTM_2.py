@@ -471,7 +471,7 @@ def main():
     observable_flips = observable_flips.astype(int).flatten().tolist()
     
     # Model hyperparameters - adjusted
-    input_size = 1
+    input_size = 1 
     hidden_size = 128  # Reduced size
     output_size = 1
     grid_height = 4
