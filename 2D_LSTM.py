@@ -88,6 +88,10 @@ class LatticeRNNCell(nn.Module):
         if hidden_up is None:
             hidden_up = torch.zeros(self.batch_size, self.hidden_size, device=device)
             cell_up = torch.zeros(self.batch_size, self.hidden_size, device=device)
+
+        # Also ensure hidden_prev and cell_prev are on the same device
+        hidden_prev = hidden_prev.to(device)
+        cell_prev = cell_prev.to(device)
             
         # Combine hidden states from different directions
         combined_h = torch.cat((hidden_left, hidden_up, hidden_prev), dim=1)
@@ -309,7 +313,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test
 
-def train_model(model, train_loader, criterion, optimizer, num_epochs, num_rounds, device='cuda'):
+def train_model(model, train_loader, criterion, optimizer, scheduler, num_epochs, num_rounds, device='cuda'):
     """
     Train the model
     
@@ -352,10 +356,12 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             running_loss += loss.item()
         
         # Calculate average loss for this epoch
+        scheduler.step(running_loss)
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
-        
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+        current_lr = scheduler.get_last_lr()[0]
+
+        print(f"Epoch [{epoch+1}/{num_epochs}], lr: {current_lr} , Loss: {avg_loss:.4f}")
     
     print("Training finished.")
     return model, losses
@@ -431,7 +437,7 @@ def load_data(num_shots):
 # Configuration parameters
 distance = 3
 rounds = 11
-num_shots = 100000
+num_shots = 1000
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -480,12 +486,12 @@ grid_width = 2
 batch_size = 128
 test_size = 0.2
 learning_rate = 0.0005
-num_epochs = 20
+num_epochs = 2
 fc_layers_intra = [0] #not used
 fc_layers_out = [hidden_size]
 
 # Print configuration
-print(f"2D LSTM connection")
+print(f"2D LSTM")
 print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
 print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
 print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
@@ -499,14 +505,17 @@ detection_array_2D, observable_flips, batch_size, test_size
 )
 
 # Create model
-model = BlockRNN(input_size, hidden_size, output_size, grid_height, grid_width, fc_layers_intra, fc_layers_out, batch_size).to(device)
+model = BlockRNN(input_size, hidden_size, output_size, grid_height, 
+                 grid_width, fc_layers_intra, fc_layers_out, batch_size).to(device)
 
 # Define loss function and optimizer
 criterion = nn.BCELoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
+
 
 # Train model
-model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds, device)
+model, losses = train_model(model, train_loader, criterion, optimizer, scheduler, num_epochs, rounds, device)
 
 # Evaluate model
 accuracy, predictions = evaluate_model(model, test_loader, rounds, device)
