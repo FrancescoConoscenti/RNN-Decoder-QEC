@@ -486,7 +486,7 @@ grid_width = 2
 batch_size = 256
 test_size = 0.2
 learning_rate = 0.0001
-num_epochs = 10
+num_epochs = 20
 fc_layers_intra = [0] #not used
 fc_layers_out = [hidden_size]
 
