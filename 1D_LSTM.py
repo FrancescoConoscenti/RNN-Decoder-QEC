@@ -302,7 +302,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     
     return train_loader, test_loader, X_train, X_test, y_train, y_test
 
-def train_model(model, train_loader, criterion, optimizer, num_epochs, num_rounds):
+def train_model(model, train_loader, criterion, optimizer, num_epochs, num_rounds, scheduler=None):
     """
     Train the model
     
@@ -340,24 +340,16 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             # Backward pass and optimize
             loss.backward()
             optimizer.step()
-            
-            """for name, param in model.named_parameters():
-                if torch.isnan(param.grad).any():
-                    print(f"Gradient for {name} contains NaN values!")
-                    sys.exit(1)"""
-            
-            """for name, param in model.named_parameters():
-                if param.grad is not None:
-                    grad_norm = param.grad.norm().item()  # Compute L2 norm of the gradient
-                    if grad_norm < 1e-15:
-                        print(f"Warning: Gradient for {name} is too small! Norm: {grad_norm:.6f}")"""
             running_loss += loss.item()
         
         # Calculate average loss for this epoch
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
+        current_lr = optimizer.param_groups[0]['lr']
         
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}")
+        print(f"Epoch [{epoch+1}/{num_epochs}], LR: {current_lr}, Loss: {avg_loss:.4f}")
+        if scheduler is not None:
+            scheduler.step(avg_loss)  # Step the scheduler with the monitored metric
     
     print("Training finished.")
 
@@ -574,10 +566,12 @@ if __name__ == "__main__":
     # Define loss function and optimizer
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode='min', factor=0.5, patience=3, verbose=True)
 
     # Train model
     start_time = time.time()
-    model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds)
+    model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds, scheduler)
     end_time = time.time()
 
     #Finetune

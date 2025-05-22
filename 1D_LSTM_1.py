@@ -475,11 +475,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
         losses.append(avg_loss)
         
         # Learning rate scheduling
-        if scheduler is not None:
-            if isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau):
-                scheduler.step(avg_loss)
-            else:
-                scheduler.step()
+        scheduler.step(running_loss)
         
         # Early stopping check
         if avg_loss < best_loss:
@@ -489,7 +485,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             patience_counter += 1
             
         current_lr = optimizer.param_groups[0]['lr']
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.4f}, LR: {current_lr:.6f}")
+        print(f"Epoch [{epoch+1}/{num_epochs}], LR: {current_lr}, Loss: {avg_loss:.4f}")
         
         # Early stopping
         if patience_counter >= patience and epoch > 10:
@@ -609,7 +605,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 10000
+    num_shots = 100000
     FineTune = False
 
     # Determine system size based on distance
