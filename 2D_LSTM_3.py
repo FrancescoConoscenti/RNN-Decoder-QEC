@@ -481,7 +481,7 @@ def main():
     test_size = 0.2
     learning_rate = 0.001  # Increased learning rate
     patience = 2  # Early stopping patience
-    num_epochs = 1
+    num_epochs = 10
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
