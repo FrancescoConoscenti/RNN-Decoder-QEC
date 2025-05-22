@@ -79,9 +79,7 @@ class LatticeRNNCell(nn.Module):
         Returns:
             Tuple of (hidden_state, cell_state)
         """
-
         device = x.device
-
         hidden_left, cell_left, hidden_up, cell_up, hidden_prev, cell_prev = hidden_states
         
         # Initialize missing hidden states with zeros if needed
@@ -91,14 +89,6 @@ class LatticeRNNCell(nn.Module):
         if hidden_up is None:
             hidden_up = torch.zeros(self.batch_size, self.hidden_size, device=device)
             cell_up = torch.zeros(self.batch_size, self.hidden_size, device=device)
-
-        # Also ensure hidden_prev and cell_prev are on the same device
-        hidden_prev = hidden_prev.to(device)
-        hidden_up = hidden_up.to(device)
-        hidden_left = hidden_left.to(device)
-        cell_prev = cell_prev.to(device)
-        cell_up = cell_up.to(device)
-        cell_left = cell_left.to(device)
             
         # Combine hidden states from different directions
         combined_h = torch.cat((hidden_left, hidden_up, hidden_prev), dim=1)
@@ -107,9 +97,6 @@ class LatticeRNNCell(nn.Module):
         # Process combined hidden states
         processed_h = self.hidden_processor(combined_h)
         processed_c = self.cell_processor(combined_c)
-
-        processed_h = processed_h.to(device)
-        processed_c = processed_c.to(device)
         
         # Update hidden state using LSTM cell
         x = x.squeeze(1).float()
@@ -390,7 +377,7 @@ def evaluate_model(model, test_loader, num_rounds, device='cuda'):
         accuracy: Test accuracy
         predictions: Model predictions
     """
-    #model.to(device)
+    model.to(device)  # Ensure model is on the correct device
     model.eval()
     correct = 0
     total = 0
@@ -398,6 +385,9 @@ def evaluate_model(model, test_loader, num_rounds, device='cuda'):
     
     with torch.no_grad():
         for batch_x, batch_y in test_loader:
+            # Move data to device - this was missing!
+            batch_x = batch_x.to(device)
+            batch_y = batch_y.to(device)
             
             # Forward pass
             output, _ = model(batch_x, num_rounds)
