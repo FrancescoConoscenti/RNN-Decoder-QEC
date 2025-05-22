@@ -83,19 +83,19 @@ class LatticeRNNCell(nn.Module):
         
         # Initialize missing hidden states with zeros if needed
         if hidden_left is None:
-            hidden_left = torch.zeros(self.batch_size, self.hidden_size, device=device)
-            cell_left = torch.zeros(self.batch_size, self.hidden_size, device=device)
+            hidden_left = torch.zeros(self.batch_size, self.hidden_size)#, device=device)
+            cell_left = torch.zeros(self.batch_size, self.hidden_size)#, device=device)
         if hidden_up is None:
-            hidden_up = torch.zeros(self.batch_size, self.hidden_size, device=device)
-            cell_up = torch.zeros(self.batch_size, self.hidden_size, device=device)
+            hidden_up = torch.zeros(self.batch_size, self.hidden_size)#, device=device)
+            cell_up = torch.zeros(self.batch_size, self.hidden_size)#, device=device)
 
         # Also ensure hidden_prev and cell_prev are on the same device
-        hidden_prev = hidden_prev.to(device)
+        """hidden_prev = hidden_prev.to(device)
         hidden_up = hidden_up.to(device)
         hidden_left = hidden_left.to(device)
         cell_prev = cell_prev.to(device)
         cell_up = cell_up.to(device)
-        cell_left = cell_left.to(device)
+        cell_left = cell_left.to(device)"""
             
         # Combine hidden states from different directions
         combined_h = torch.cat((hidden_left, hidden_up, hidden_prev), dim=1)
