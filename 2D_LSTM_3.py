@@ -379,7 +379,7 @@ def train_model(model, train_loader, val_loader, lr, num_epochs, num_rounds, pat
                 print(f"Early stopping at epoch {epoch+1}")
                 break
         
-        scheduler.step(train_loss)
+        scheduler.step(val_loss)
     
     # Load best model
     model.load_state_dict(torch.load('best_model.pth'))
@@ -481,7 +481,7 @@ def main():
     test_size = 0.2
     learning_rate = 0.001  # Increased learning rate
     patience = 2  # Early stopping patience
-    num_epochs = 10
+    num_epochs = 20
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
