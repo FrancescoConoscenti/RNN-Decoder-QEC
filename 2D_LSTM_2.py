@@ -460,7 +460,7 @@ def main():
 
     distance = 3
     rounds = 17
-    num_shots = 20000
+    num_shots = 200000
 
     # Configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
