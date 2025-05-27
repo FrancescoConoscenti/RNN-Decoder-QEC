@@ -338,13 +338,13 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             running_loss += loss.item()
         
         # Calculate average loss for this epoch
+        scheduler.step(running_loss)  # Step the scheduler with the monitored metric
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
         current_lr = optimizer.param_groups[0]['lr']
         
         print(f"Epoch [{epoch+1}/{num_epochs}], LR: {current_lr}, Loss: {avg_loss:.4f}")
-        if scheduler is not None:
-            scheduler.step(avg_loss)  # Step the scheduler with the monitored metric
+        
     
     print("Training finished.")
 
@@ -534,7 +534,7 @@ if __name__ == "__main__":
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
-    learning_rate = 0.001
+    learning_rate = 0.002
     patience = 2
     num_epochs = 30
     num_epochs_finetune = 1
