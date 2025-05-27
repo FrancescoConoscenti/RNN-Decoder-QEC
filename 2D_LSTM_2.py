@@ -480,7 +480,7 @@ def main():
     batch_size = 256  # Reduced batch size
     test_size = 0.2
     learning_rate = 0.0005  # Increased learning rate
-    patience = 3  # Early stopping patience
+    patience = 2  # Early stopping patience
     num_epochs = 30
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
