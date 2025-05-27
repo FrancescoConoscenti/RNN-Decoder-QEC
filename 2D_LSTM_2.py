@@ -6,6 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import precision_recall_fscore_support, confusion_matrix
 import numpy as np
 import math
+import time
 
 class ImprovedLatticeRNNCell(nn.Module):
     def __init__(self, input_size, hidden_size, dropout_rate=0.2):
@@ -459,7 +460,7 @@ def main():
 
     distance = 3
     rounds = 17
-    num_shots = 2000
+    num_shots = 20000
 
     # Configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -481,7 +482,7 @@ def main():
     test_size = 0.2
     learning_rate = 0.0005  # Increased learning rate
     patience = 2  # Early stopping patience
-    num_epochs = 30
+    num_epochs = 20
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
@@ -505,12 +506,13 @@ def main():
     
     print(f"Model has {sum(p.numel() for p in model.parameters())} parameters")
     
-    
+    start_time = time.time()
     # Train model
     #model, losses = train_model(model, train_loader, criterion, optimizer, scheduler, num_epochs, rounds, device)
     model, train_losses, val_losses = train_model(model, train_loader, val_loader, learning_rate, 
                                                             num_epochs, rounds, patience, device=device)
-
+    end_time = time.time()
+    print(f"Training time: {(end_time - start_time)/60:.2f} minutes")
     # Evaluate model
     accuracy, predictions, recall, f1 = evaluation(model, test_loader, rounds, device)
 
