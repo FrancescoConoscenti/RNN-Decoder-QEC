@@ -460,7 +460,7 @@ def main():
 
     distance = 3
     rounds = 17
-    num_shots = 500000
+    num_shots = 1000000
 
     # Configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -482,7 +482,7 @@ def main():
     test_size = 0.2
     learning_rate = 0.0005  # Increased learning rate
     patience = 2  # Early stopping patience
-    num_epochs = 30
+    num_epochs = 50
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
