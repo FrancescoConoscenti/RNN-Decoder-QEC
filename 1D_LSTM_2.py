@@ -568,7 +568,7 @@ def load_data_exp():
 if __name__ == "__main__":
     # Configuration parameters
     distance = 3
-    rounds = 17
+    rounds = 5
     num_shots = 10000
     FineTune = False
 
