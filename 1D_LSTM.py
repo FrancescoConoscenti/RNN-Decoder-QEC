@@ -524,7 +524,7 @@ if __name__ == "__main__":
     learning_rate = 0.001
     patience = 3
     num_epochs = 30
-    num_epochs_finetune = 1
+    num_epochs_finetune = 2
     fc_layers_intra =[0]
     fc_layers_out = [int(hidden_size/8)]
 
