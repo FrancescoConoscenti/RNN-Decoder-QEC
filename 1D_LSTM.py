@@ -281,7 +281,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(
         detection_array, observable_flips, 
-        test_size=test_size, shuffle=True
+        test_size=test_size, shuffle=False
     )
      
     if isinstance(detection_array ,  (np.ndarray, list)):
