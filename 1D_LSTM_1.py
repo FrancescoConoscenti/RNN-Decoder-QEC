@@ -17,25 +17,25 @@ class FullyConnectedNN(nn.Module):
         if layers_sizes == [0]:
             layers.append(nn.Linear(input_size, hidden_size))
             self._init_weights(layers[-1])
-            layers.append(nn.LayerNorm(hidden_size))
+            #layers.append(nn.LayerNorm(hidden_size))
             layers.append(nn.ReLU())
-            layers.append(nn.Dropout(dropout_rate))
+            #layers.append(nn.Dropout(dropout_rate))
 
         else:
             # Input layer
             layers.append(nn.Linear(input_size, layers_sizes[0]))
             self._init_weights(layers[-1])
-            layers.append(nn.LayerNorm(layers_sizes[0]))
+            #layers.append(nn.LayerNorm(layers_sizes[0]))
             layers.append(nn.ReLU())
-            layers.append(nn.Dropout(dropout_rate))
+            #layers.append(nn.Dropout(dropout_rate))
             
             # Hidden layers
             for i in range(len(layers_sizes) - 1):
                 layers.append(nn.Linear(layers_sizes[i], layers_sizes[i + 1]))
                 self._init_weights(layers[-1])
-                layers.append(nn.LayerNorm(layers_sizes[i + 1]))
+                #layers.append(nn.LayerNorm(layers_sizes[i + 1]))
                 layers.append(nn.ReLU())
-                layers.append(nn.Dropout(dropout_rate))
+                #layers.append(nn.Dropout(dropout_rate))
             
             # Output layer
             layers.append(nn.Linear(layers_sizes[-1], hidden_size))
