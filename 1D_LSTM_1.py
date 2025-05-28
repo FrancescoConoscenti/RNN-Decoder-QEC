@@ -639,7 +639,7 @@ if __name__ == "__main__":
     batch_size = 256
     test_size = 0.2
     learning_rate = 0.001
-    patience = 2
+    patience = 5
     num_epochs = 20  # Increased for early stopping
     num_epochs_finetune = 5
     fc_layers_intra = [0]
