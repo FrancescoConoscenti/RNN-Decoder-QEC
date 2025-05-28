@@ -509,8 +509,8 @@ def load_data_exp(rounds, num_ancilla_qubits):
 def main():
 
     distance = 3
-    rounds = 17
-    num_shots = 3000
+    rounds = 5
+    num_shots = 1000000
 
     # Configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -534,10 +534,10 @@ def main():
     batch_size = 256  # Reduced batch size
     test_size = 0.2
     learning_rate = 0.001  # Increased learning rate
-    learning_rate_fine = 0.0001  # Fine-tuning learning rate
+    learning_rate_fine = 0.0005  # Fine-tuning learning rate
     patience = 3  # Early stopping patience
-    num_epochs = 2
-    num_epochs_fine = 2  # Reduced fine-tuning epochs
+    num_epochs = 30
+    num_epochs_fine = 10  # Reduced fine-tuning epochs
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
@@ -574,7 +574,7 @@ def main():
     print(f"Training time: {(end_time - start_time)/60:.2f} minutes")
     # Evaluate model
     accuracy, predictions, recall, f1 = evaluation(model, test_loader, rounds, device)
-
+    print("FineTune")
     #Finetune
     model, train_losses, val_losses = train_model(model, train_loader_exp, val_loader_exp, learning_rate_fine, 
                                                             num_epochs_fine, rounds, patience, device=device)
