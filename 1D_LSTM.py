@@ -22,7 +22,9 @@ class FullyConnectedNN(nn.Module):
         if layers_sizes == [0]:
             layers.append(nn.Linear(input_size, hidden_size))
             # Define activation function (e.g., ReLU)
+            #layers.append(nn.LayerNorm(hidden_size))
             layers.append(nn.ReLU())
+
 
         else:
             layers.append(nn.Linear(input_size, layers_sizes[0]))
@@ -41,6 +43,15 @@ class FullyConnectedNN(nn.Module):
     def forward(self, x):
         return self.network(x)
 
+def initialize_weights(model):
+    # Initialize LSTM weights only
+    for cell in model.rnn_block.cells:
+        for name, param in cell.lstm_cell.named_parameters():
+            if 'weight' in name:
+                nn.init.xavier_uniform_(param)
+            elif 'bias' in name:
+                nn.init.zeros_(param)
+
 
 class LatticeRNNCell(nn.Module):
     def __init__(self, input_size, hidden_size, fc_layers, batch_size):
@@ -57,7 +68,6 @@ class LatticeRNNCell(nn.Module):
         self.hidden_size = hidden_size
         self.batch_size = batch_size
         
-        
         # Process combined hidden states 
         # (precedent chain element and previous in time so input dim = hidden_size*2)
         self.hidden_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size)
@@ -65,6 +75,7 @@ class LatticeRNNCell(nn.Module):
         
         # LSTM cell for time dimension
         self.lstm_cell = nn.LSTMCell(input_size, hidden_size)
+        self.ln = nn.LayerNorm(hidden_size)
         
     def forward(self, x, hidden_states):
         """
@@ -104,6 +115,7 @@ class LatticeRNNCell(nn.Module):
         # Update hidden state using LSTM cell
         x = x.squeeze(1).float()
         hidden, cell = self.lstm_cell(x, (processed_h, processed_c))
+        hidden = self.ln(hidden)
         
         return hidden, cell
 
@@ -334,8 +346,10 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             
             # Backward pass and optimize
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
             running_loss += loss.item()
+            
         
         # Calculate average loss for this epoch
         scheduler.step(running_loss)  # Step the scheduler with the monitored metric
@@ -473,7 +487,7 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 17
+    rounds = 5
     num_shots = 10000
     FineTune = False
 
@@ -558,6 +572,8 @@ if __name__ == "__main__":
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
+
+    initialize_weights(model)
 
     # Define loss function and optimizer
     criterion = nn.BCELoss()
