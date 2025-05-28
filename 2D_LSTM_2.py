@@ -7,6 +7,7 @@ from sklearn.metrics import precision_recall_fscore_support, confusion_matrix
 import numpy as np
 import math
 import time
+from typing import List
 
 class ImprovedLatticeRNNCell(nn.Module):
     def __init__(self, input_size, hidden_size, dropout_rate=0.2):
@@ -384,7 +385,7 @@ def train_model(model, train_loader, val_loader, lr, num_epochs, num_rounds, pat
         scheduler.step(val_loss)
     
     # Load best model
-    model.load_state_dict(torch.load('best_model.pth'))
+    #model.load_state_dict(torch.load('best_model.pth'))
     return model, train_losses, val_losses
 
 def evaluation(model, test_loader, num_rounds, device='cuda'):
@@ -455,23 +456,74 @@ def load_data(num_shots, rounds):
         
     return detection_array1, observable_flips
 
+def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
+    shots = []
+    bytes_per_shot = (bits_per_shot + 7) // 8
+    for offset in range(0, len(data), bytes_per_shot):
+        shot = []
+        for k in range(bits_per_shot):
+            byte = data[offset + k // 8]
+            bit = (byte >> (k % 8)) % 2 == 1
+            shot.append(bit)
+        shots.append(shot)
+    return shots
+
+def load_data_exp(rounds, num_ancilla_qubits):
+
+    # Load the compressed data
+    if rounds == 5:
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/obs_flips_actual.01"
+    if rounds == 11:
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r11_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r11_center_3_5/obs_flips_actual.01"
+    if rounds == 17:
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/obs_flips_actual.01"
+
+    bits_per_shot = rounds*8
+
+    with open(path1, "rb") as file:
+        # Read the file content as bytes
+        data_detection = file.read()
+
+    detection_exp = parse_b8(data_detection,bits_per_shot)
+    detection_exp1 = np.array(detection_exp)
+    detection_exp2 = detection_exp1.reshape(50000, rounds, num_ancilla_qubits)
+
+
+    with open(path2, "rb") as file:
+        # Read the file content as bytes
+        data_obs = file.read()
+
+    obs_exp = data_obs.replace(b"\n", b"")
+    obs_exp_bit = [bit-48 for bit in obs_exp]
+    obs_exp_bit_array = np.array(obs_exp_bit)
+
+    X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
+
+    return detection_exp2, obs_exp_bit_array 
+
 
 # Usage example
 def main():
 
     distance = 3
-    rounds = 11
-    num_shots = 2000000
+    rounds = 17
+    num_shots = 3000
 
     # Configuration
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load your data here
     detection_array1, observable_flips = load_data(num_shots, rounds)
+    detection_array1_exp, observable_flips_exp = load_data_exp(rounds,  num_ancilla_qubits = 8)
 
     order = [0,5,1,3,4,6,2,7] # Reorder using advanced indexing to create the chain connectivity
     detection_array_ordered = detection_array1[..., order]
     observable_flips = observable_flips.astype(int).flatten().tolist()
+    detection_array_ordered_exp = detection_array1_exp[..., order]
+    observable_flips_exp = observable_flips_exp.astype(int).flatten().tolist()
     
     # Model hyperparameters - adjusted
     input_size = 1 
@@ -481,9 +533,11 @@ def main():
     grid_width = 2
     batch_size = 256  # Reduced batch size
     test_size = 0.2
-    learning_rate = 0.0005  # Increased learning rate
-    patience = 5  # Early stopping patience
-    num_epochs = 40
+    learning_rate = 0.001  # Increased learning rate
+    learning_rate_fine = 0.0001  # Fine-tuning learning rate
+    patience = 3  # Early stopping patience
+    num_epochs = 2
+    num_epochs_fine = 2  # Reduced fine-tuning epochs
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
@@ -495,10 +549,14 @@ def main():
 
     #adapt input data topology of model
     detection_array_2D = detection_array_ordered.reshape(num_shots, rounds, grid_height, grid_width)
+    detection_array_2D_exp = detection_array_ordered_exp.reshape(50000, rounds, grid_height, grid_width)
 
     # Create data loaders
     train_loader, val_loader, test_loader, X_train, X_val, X_test, y_train, y_val, y_test = simple_create_data_loaders(
-    detection_array_2D, observable_flips, batch_size, test_size)
+                                                        detection_array_2D, observable_flips, batch_size, test_size)
+    
+    train_loader_exp, val_loader_exp, test_loader_exp, X_train, X_val, X_test, y_train, y_val, y_test = simple_create_data_loaders(
+                                                        detection_array_2D_exp, observable_flips_exp, batch_size, test_size)
 
     # Create model with improvements
     # Create model
@@ -516,6 +574,13 @@ def main():
     print(f"Training time: {(end_time - start_time)/60:.2f} minutes")
     # Evaluate model
     accuracy, predictions, recall, f1 = evaluation(model, test_loader, rounds, device)
+
+    #Finetune
+    model, train_losses, val_losses = train_model(model, train_loader_exp, val_loader_exp, learning_rate_fine, 
+                                                            num_epochs_fine, rounds, patience, device=device)
+    
+    accuracy, predictions, recall, f1 = evaluation(model, test_loader_exp, rounds, device)
+
 
 
 if __name__ == "__main__":
