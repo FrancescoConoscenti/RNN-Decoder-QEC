@@ -197,7 +197,7 @@ def train(model, binary_sequences, targets, num_epochs, learning_rate, batch_siz
             loss.backward()
             optimizer.step()
         
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss}')
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss:.4f}')
 
 
 def finetune(model, binary_sequences, targets, num_epochs, learning_rate, batch_size):
@@ -239,7 +239,7 @@ def finetune(model, binary_sequences, targets, num_epochs, learning_rate, batch_
             loss.backward()
             optimizer.step()
         
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss}')
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss:.4f}')
     print("End of finetuning")
 
 
@@ -288,8 +288,8 @@ output_size = 1  # Output is the value of the observable after the mmt cycles
 batch_size = 256
 learning_rate=0.0005
 learning_rate_fine=0.0001
-num_epochs=25
-num_epochs_fine=5
+num_epochs=40
+num_epochs_fine=10
 
 print(f'RNN batch')
 print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
