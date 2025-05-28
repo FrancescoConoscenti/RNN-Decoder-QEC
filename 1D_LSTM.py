@@ -516,7 +516,7 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 128
+    hidden_size = 256
     output_size = 1
     chain_length = num_ancilla_qubits
     batch_size = 256
