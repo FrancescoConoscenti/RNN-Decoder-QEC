@@ -76,6 +76,8 @@ class LatticeRNNCell(nn.Module):
         # LSTM cell for time dimension
         self.lstm_cell = nn.LSTMCell(input_size, hidden_size)
         self.ln = nn.LayerNorm(hidden_size)
+        self.dropout = nn.Dropout(0.2)
+        
         
     def forward(self, x, hidden_states):
         """
@@ -116,6 +118,7 @@ class LatticeRNNCell(nn.Module):
         x = x.squeeze(1).float()
         hidden, cell = self.lstm_cell(x, (processed_h, processed_c))
         hidden = self.ln(hidden)
+        hidden = self.dropout(hidden)
         
         return hidden, cell
 
@@ -485,7 +488,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 17
-    num_shots = 500000
+    num_shots = 7000
     FineTune = False
 
     # Determine system size based on distance
