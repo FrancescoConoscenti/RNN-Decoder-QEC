@@ -458,7 +458,7 @@ def load_data(num_shots, rounds):
 def main():
 
     distance = 3
-    rounds = 11
+    rounds = 5
     num_shots = 10000
 
     # Configuration
@@ -480,7 +480,7 @@ def main():
     batch_size = 32 # Reduced batch size
     test_size = 0.2
     learning_rate = 0.001  # Increased learning rate
-    patience = 2  # Early stopping patience
+    patience = 5  # Early stopping patience
     num_epochs = 20
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
