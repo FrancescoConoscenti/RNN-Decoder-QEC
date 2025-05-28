@@ -458,7 +458,7 @@ def load_data(num_shots, rounds):
 def main():
 
     distance = 3
-    rounds = 5
+    rounds = 11
     num_shots = 100000
 
     # Configuration
