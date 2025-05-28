@@ -288,8 +288,8 @@ output_size = 1  # Output is the value of the observable after the mmt cycles
 batch_size = 256
 learning_rate=0.0005
 learning_rate_fine=0.0001
-num_epochs = 80
-num_epochs_fine=20
+num_epochs = 120
+num_epochs_fine=40
 
 print(f'RNN batch')
 print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
