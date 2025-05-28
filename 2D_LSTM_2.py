@@ -368,7 +368,7 @@ def train_model(model, train_loader, val_loader, lr, num_epochs, num_rounds, pat
         print(f"Train Loss: {train_loss:.4f}, Val Loss: {val_loss:.4f}, Val Acc: {val_accuracy:.4f}")
         print(f"LR: {optimizer.param_groups[0]['lr']}")
         
-        """        # Early stopping
+        # Early stopping
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             patience_counter = 0
@@ -378,7 +378,7 @@ def train_model(model, train_loader, val_loader, lr, num_epochs, num_rounds, pat
             if patience_counter >= patience:
                 print(f"Early stopping at epoch {epoch+1}")
                 break
-        """
+        
         
         scheduler.step(val_loss)
     
@@ -459,7 +459,7 @@ def load_data(num_shots, rounds):
 def main():
 
     distance = 3
-    rounds = 17
+    rounds = 11
     num_shots = 1000000
 
     # Configuration
@@ -481,7 +481,7 @@ def main():
     batch_size = 256  # Reduced batch size
     test_size = 0.2
     learning_rate = 0.0005  # Increased learning rate
-    patience = 2  # Early stopping patience
+    patience = 5  # Early stopping patience
     num_epochs = 50
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
