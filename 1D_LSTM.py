@@ -281,7 +281,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(
         detection_array, observable_flips, 
-        test_size=test_size, shuffle=False
+        test_size=test_size, shuffle=True
     )
      
     if isinstance(detection_array ,  (np.ndarray, list)):
@@ -480,15 +480,12 @@ def load_data_exp():
 
 
 
-
-
-
 if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 5
-    num_shots = 10000
+    rounds = 11
+    num_shots = 100000
     FineTune = False
 
     # Determine system size based on distance
@@ -500,33 +497,6 @@ if __name__ == "__main__":
         num_qubits = 49
         num_data_qubits = 25
         num_ancilla_qubits = 24
-
-
-    """
-    path = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/circuit_noisy.stim"
-    circuit_google = stim.Circuit.from_file(path)
-
-    # Compile the sampler
-    sampler = circuit_google.compile_detector_sampler()
-    # Sample shots, with observables
-    detection_events, observable_flips = sampler.sample(num_shots, separate_observables=True)
-
-    detection_events = detection_events.astype(int)
-    detection_strings = [''.join(map(str, row)) for row in detection_events] #compress the detection events in a tensor
-    detection_events_numeric = [[int(value) for value in row] for row in detection_events] # Convert string elements to integers (or floats if needed)
-    detection_array = np.array(detection_events_numeric) # Convert detection_events to a numpy array
-    detection_array1 = detection_array.reshape(num_shots, rounds, num_ancilla_qubits) #first dim is the number of shots, second dim round number, third dim is the Ancilla 
-    order = [0,3,5,6,7,4,2,1]# Reorder using advanced indexing to create the chain connectivity
-    detection_array_ordered = detection_array1[..., order]
-
-    observable_flips = observable_flips.astype(int).flatten().tolist()
-
-    # Save with compression
-    np.savez_compressed('data_stim/google_r5.npz', detection_array_ordered = detection_array_ordered, observable_flips=observable_flips)
-    """
-    """# Load data
-    data_path = 'data_stim/google_r5.npz'
-    detection_array, observable_flips = load_data(data_path, num_shots)"""
 
     #Load data form compressed file .npz
     detection_array1, observable_flips = load_data(num_shots)
@@ -548,7 +518,7 @@ if __name__ == "__main__":
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
-    learning_rate = 0.002
+    learning_rate = 0.001
     patience = 2
     num_epochs = 30
     num_epochs_finetune = 1
