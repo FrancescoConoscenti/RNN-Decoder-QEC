@@ -477,11 +477,11 @@ def main():
     output_size = 1
     grid_height = 4
     grid_width = 2
-    batch_size = 256 # Reduced batch size
+    batch_size = 256
     test_size = 0.2
-    learning_rate = 0.001  # Increased learning rate
-    patience = 10  # Early stopping patience
-    num_epochs = 20
+    learning_rate = 0.001  
+    patience = 10 
+    num_epochs = 30
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2
     
