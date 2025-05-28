@@ -509,7 +509,7 @@ def load_data_exp(rounds, num_ancilla_qubits):
 def main():
 
     distance = 3
-    rounds = 17
+    rounds = 5
     num_shots = 1000000
 
     # Configuration
