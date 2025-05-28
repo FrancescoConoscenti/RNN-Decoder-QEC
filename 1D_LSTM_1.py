@@ -168,7 +168,7 @@ class LatticeRNNCell(nn.Module):
         
         # Process input
         x = x.squeeze(1).float()
-        x = self.input_norm(self.fc_input(x))
+        #x = self.input_norm(self.fc_input(x))
         
         # Update hidden state using LSTM cell
         hidden, cell = self.lstm_cell(x, (processed_h, processed_c))
