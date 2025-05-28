@@ -408,7 +408,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     # Create data loaders
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, 
-        shuffle=True, drop_last=False  # Changed shuffle to True for better training
+        shuffle=False, drop_last=False  # Changed shuffle to True for better training
     )
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, 
@@ -476,7 +476,7 @@ def train_model(model, train_loader, criterion, optimizer, patience, num_epochs,
         losses.append(avg_loss)
         
         # Learning rate scheduling
-        scheduler.step(avg_loss)
+        scheduler.step(running_loss)
         current_lr = optimizer.param_groups[0]['lr']
         
         # Early stopping check
