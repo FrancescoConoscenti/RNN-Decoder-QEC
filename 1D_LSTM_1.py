@@ -91,9 +91,10 @@ class LatticeRNNCell(nn.Module):
         self.dropout_rate = dropout_rate
         
         # Process input with layer normalization
-        self.fc_input = nn.Linear(input_size, input_size)
+        """self.fc_input = nn.Linear(input_size, input_size)
         self._init_weights(self.fc_input)
         self.input_norm = nn.LayerNorm(input_size)
+        """
         
         # Process combined hidden states 
         self.hidden_processor = FullyConnectedNN(hidden_size*2, fc_layers, hidden_size, dropout_rate)
@@ -606,7 +607,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 100000
+    num_shots = 10000
     FineTune = False
 
     # Determine system size based on distance
