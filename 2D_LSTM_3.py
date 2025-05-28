@@ -473,11 +473,11 @@ def main():
     
     # Model hyperparameters - adjusted
     input_size = 1
-    hidden_size = 32  # Reduced size
+    hidden_size = 64  # Reduced size
     output_size = 1
     grid_height = 4
     grid_width = 2
-    batch_size = 32 # Reduced batch size
+    batch_size = 256 # Reduced batch size
     test_size = 0.2
     learning_rate = 0.001  # Increased learning rate
     patience = 5  # Early stopping patience
