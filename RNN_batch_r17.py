@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=1000000
+num_shots=2000000
 # Compile the sampler
 sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
@@ -283,7 +283,7 @@ def test(model, binary_sequences, targets, batch_size):
 
 # Define parameters
 input_size = num_ancilla_qubits # Each input is a Detection round, vector of mmt of the Ancilla
-hidden_size = 128  # You can experiment with different sizes
+hidden_size = 256  # You can experiment with different sizes
 output_size = 1  # Output is the value of the observable after the mmt cycles
 batch_size = 256
 learning_rate=0.0001

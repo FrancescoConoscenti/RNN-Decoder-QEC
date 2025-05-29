@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=1000000
+num_shots=2000000
 # Compile the sampler
 sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
@@ -197,7 +197,7 @@ def train(model, binary_sequences, targets, num_epochs, learning_rate, batch_siz
             loss.backward()
             optimizer.step()
         
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss/num_batches:.4f}')
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss:.4f}')
 
 
 def finetune(model, binary_sequences, targets, num_epochs, learning_rate, batch_size):
@@ -239,7 +239,7 @@ def finetune(model, binary_sequences, targets, num_epochs, learning_rate, batch_
             loss.backward()
             optimizer.step()
         
-        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss/num_batches:.4f}')
+        print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {total_loss:.4f}')
     print("End of finetuning")
 
 
@@ -278,12 +278,12 @@ def test(model, binary_sequences, targets, batch_size):
 
         # Calculate accuracy
         accuracy = correct / total
-        print(f'Test Accuracy: {accuracy * 100:.2f}%')
+        print(f'Test Accuracy: {accuracy * 100}%')
 
 
 # Define parameters
 input_size = num_ancilla_qubits # Each input is a Detection round, vector of mmt of the Ancilla
-hidden_size = 128  # You can experiment with different sizes
+hidden_size = 256  # You can experiment with different sizes
 output_size = 1  # Output is the value of the observable after the mmt cycles
 batch_size = 256
 learning_rate=0.0005
