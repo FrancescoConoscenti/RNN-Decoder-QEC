@@ -448,39 +448,41 @@ def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
         shots.append(shot)
     return shots
 
-def load_data_exp():
+def load_data_exp(rounds, num_ancilla_qubits):
 
+    # Load the compressed data
     if rounds == 5:
-        path_detection = r"google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\detection_events.b8"
-        path_obs = r"google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\obs_flips_actual.01"
-
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r05_center_3_5/obs_flips_actual.01"
     if rounds == 11:
-        path_detection = r"google_qec3v5_experiment_data\surface_code_bX_d3_r11_center_3_5\detection_events.b8"
-        path_obs = r"google_qec3v5_experiment_data\surface_code_bX_d3_r11_center_3_5\obs_flips_actual.01"
-
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r11_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r11_center_3_5/obs_flips_actual.01"
     if rounds == 17:
-        path_detection = r"google_qec3v5_experiment_data\surface_code_bX_d3_r17_center_3_5\detection_events.b8"
-        path_obs = r"google_qec3v5_experiment_data\surface_code_bX_d3_r17_center_3_5\obs_flips_actual.01"
+        path1 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/detection_events.b8"
+        path2 = r"google_qec3v5_experiment_data/surface_code_bX_d3_r17_center_3_5/obs_flips_actual.01"
 
-    bits_per_shot_detection = rounds * 8
+    bits_per_shot = rounds*8
 
-    with open(path_detection, "rb") as file:
+    with open(path1, "rb") as file:
         # Read the file content as bytes
         data_detection = file.read()
 
-    with open(path_obs, "rb") as file:
+    detection_exp = parse_b8(data_detection,bits_per_shot)
+    detection_exp1 = np.array(detection_exp)
+    detection_exp2 = detection_exp1.reshape(50000, rounds, num_ancilla_qubits)
+
+
+    with open(path2, "rb") as file:
         # Read the file content as bytes
         data_obs = file.read()
 
-    detection = parse_b8(data_detection,bits_per_shot_detection)
-    detection = torch.tensor(detection).reshape(50000,rounds, num_ancilla_qubits)
+    obs_exp = data_obs.replace(b"\n", b"")
+    obs_exp_bit = [bit-48 for bit in obs_exp]
+    obs_exp_bit_array = np.array(obs_exp_bit)
 
-    obs = data_obs.replace(b"\n", b"")
-    obs = list(obs)
-    obs = [x - 48 for x in obs]
+    X_train_exp, X_test_exp, y_train_exp, y_test_exp = train_test_split(detection_exp2, obs_exp_bit_array, test_size=0.2, random_state=42, shuffle=False)
 
-    return detection, obs
-
+    return detection_exp2, obs_exp_bit_array 
 
 
 if __name__ == "__main__":
@@ -508,7 +510,7 @@ if __name__ == "__main__":
     detection_array_ordered = detection_array1[..., order]
 
     #Load data form experimental .b8 file
-    detection_array_exp, observable_flips_exp = load_data_exp()
+    detection_array_exp, observable_flips_exp = load_data_exp(rounds, num_ancilla_qubits)
     detection_array_ordered_exp = detection_array_exp[..., order]
     
 
