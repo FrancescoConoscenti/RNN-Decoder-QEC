@@ -487,9 +487,8 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 17
-    num_shots = 7000
-    FineTune = False
+    rounds = 5
+    num_shots = 1000000
 
     # Determine system size based on distance
     if distance == 3:
@@ -509,9 +508,8 @@ if __name__ == "__main__":
     detection_array_ordered = detection_array1[..., order]
 
     #Load data form experimental .b8 file
-    if FineTune:
-        detection_array_exp, observable_flips_exp = load_data_exp()
-        detection_array_ordered_exp = detection_array_exp[..., order]
+    detection_array_exp, observable_flips_exp = load_data_exp()
+    detection_array_ordered_exp = detection_array_exp[..., order]
     
 
     # Model hyperparameters
@@ -521,10 +519,11 @@ if __name__ == "__main__":
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
-    learning_rate = 0.001
+    learning_rate = 0.003
+    learning_rate_fine = 0.0003
     patience = 3
     num_epochs = 30
-    num_epochs_finetune = 2
+    num_epochs_finetune = 15
     fc_layers_intra =[0]
     fc_layers_out = [int(hidden_size/8)]
 
@@ -538,10 +537,8 @@ if __name__ == "__main__":
     train_loader, test_loader, X_train, X_test, y_train, y_test = create_data_loaders(
     detection_array_ordered, observable_flips, batch_size, test_size)
 
-    # Create data loaders
-    if FineTune:
-        train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
-        detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
+    train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
+    detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
@@ -559,15 +556,14 @@ if __name__ == "__main__":
     model, losses = train_model(model, train_loader, criterion, optimizer, num_epochs, rounds, scheduler)
     end_time = time.time()
 
-    #Finetune
-    if FineTune:
-        optimizer = optim.Adam(model.parameters(), lr=learning_rate/10)
-        model, losses = train_model(model, train_loader_exp, criterion, optimizer, num_epochs_finetune, rounds)
-
     # Evaluate model
     accuracy, predictions = evaluate_model(model, test_loader, rounds)
-    if FineTune:
-        accuracy, predictions = evaluate_model(model, test_loader_exp, rounds)
+
+    #Finetune
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate_fine)
+    model, losses = train_model(model, train_loader_exp, criterion, optimizer, num_epochs_finetune, rounds)
+    
+    accuracy, predictions = evaluate_model(model, test_loader_exp, rounds)
 
     # Print execution time
     print(f"Execution time: {end_time - start_time:.6f} seconds")
