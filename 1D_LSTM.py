@@ -451,16 +451,16 @@ def parse_b8(data: bytes, bits_per_shot: int) -> List[List[bool]]:
 def load_data_exp():
 
     if rounds == 5:
-        path_detection = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\detection_events.b8"
-        path_obs = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\obs_flips_actual.01"
+        path_detection = r"google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\detection_events.b8"
+        path_obs = r"google_qec3v5_experiment_data\surface_code_bX_d3_r05_center_3_5\obs_flips_actual.01"
 
     if rounds == 11:
-        path_detection = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r11_center_3_5\detection_events.b8"
-        path_obs = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r11_center_3_5\obs_flips_actual.01"
+        path_detection = r"google_qec3v5_experiment_data\surface_code_bX_d3_r11_center_3_5\detection_events.b8"
+        path_obs = r"google_qec3v5_experiment_data\surface_code_bX_d3_r11_center_3_5\obs_flips_actual.01"
 
     if rounds == 17:
-        path_detection = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r17_center_3_5\detection_events.b8"
-        path_obs = r"C:\Users\conof\Desktop\RNN-Decoder-QEC\google_qec3v5_experiment_data\surface_code_bX_d3_r17_center_3_5\obs_flips_actual.01"
+        path_detection = r"google_qec3v5_experiment_data\surface_code_bX_d3_r17_center_3_5\detection_events.b8"
+        path_obs = r"google_qec3v5_experiment_data\surface_code_bX_d3_r17_center_3_5\obs_flips_actual.01"
 
     bits_per_shot_detection = rounds * 8
 
