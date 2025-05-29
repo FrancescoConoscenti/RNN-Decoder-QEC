@@ -29,7 +29,7 @@ circuit_surface = stim.Circuit.generated(
     before_measure_flip_probability=0.01,
     before_round_data_depolarization=0.01)
 
-num_shots=200000
+num_shots=1000000
 # Compile the sampler
 sampler = circuit_google.compile_detector_sampler()
 # Sample shots, with observables
@@ -288,8 +288,8 @@ output_size = 1  # Output is the value of the observable after the mmt cycles
 batch_size = 256
 learning_rate=0.0005
 learning_rate_fine=0.0001
-num_epochs = 120
-num_epochs_fine=40
+num_epochs = 40
+num_epochs_fine=15
 
 print(f'RNN batch')
 print(f'circuit_google, rounds={rounds}, distance = {distance} num_shots={num_shots}, hidden_size = {hidden_size}, batch_size = {batch_size}, learning_rate={learning_rate}, num_epochs={num_epochs}')
@@ -300,8 +300,10 @@ model = BinaryRNN(input_size, hidden_size, output_size)
 # Train the model
 train(model, X_train, y_train, num_epochs, learning_rate, batch_size)
 
+test(model, X_test, y_test,batch_size)
+
 #finetuning
 finetune(model, X_train_exp, y_train_exp, num_epochs_fine, learning_rate_fine, batch_size)
     
-#test(model, X_test, y_test,batch_size)
+
 test(model, X_test_exp, y_test_exp ,batch_size)
