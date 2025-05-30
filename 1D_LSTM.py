@@ -355,7 +355,8 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             
         
         # Calculate average loss for this epoch
-        scheduler.step(running_loss)  # Step the scheduler with the monitored metric
+        if scheduler is not None:
+            scheduler.step(running_loss)  # Step the scheduler with the monitored metric
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
         current_lr = optimizer.param_groups[0]['lr']
@@ -489,8 +490,8 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 11
-    num_shots = 1000
+    rounds = 5
+    num_shots = 1000000
 
     # Determine system size based on distance
     if distance == 3:
@@ -521,11 +522,11 @@ if __name__ == "__main__":
     chain_length = num_ancilla_qubits
     batch_size = 256
     test_size = 0.2
-    learning_rate = 0.003
-    learning_rate_fine = 0.0003
+    learning_rate = 0.002
+    learning_rate_fine = 0.0002
     patience = 3
-    num_epochs = 3
-    num_epochs_finetune = 1
+    num_epochs = 30
+    num_epochs_finetune = 10
     fc_layers_intra =[0]
     fc_layers_out = [int(hidden_size/4)]
 
@@ -563,7 +564,7 @@ if __name__ == "__main__":
 
     #Finetune
     optimizer = optim.Adam(model.parameters(), lr=learning_rate_fine)
-    model, losses = train_model(model, train_loader_exp, criterion, optimizer, num_epochs_finetune, rounds)
+    model, losses = train_model(model, train_loader_exp, criterion, optimizer, num_epochs_finetune, rounds, scheduler)
     
     accuracy, predictions = evaluate_model(model, test_loader_exp, rounds)
 
