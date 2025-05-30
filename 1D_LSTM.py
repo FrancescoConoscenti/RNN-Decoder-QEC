@@ -550,7 +550,7 @@ if __name__ == "__main__":
 
     initialize_weights(model)
 
-    # Define loss function and optimizer
+    # Define loss function and optimizer 
     criterion = nn.BCELoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
