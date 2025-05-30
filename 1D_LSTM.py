@@ -490,7 +490,7 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 5
+    rounds = 11
     num_shots = 100000
 
     # Determine system size based on distance
@@ -528,7 +528,7 @@ if __name__ == "__main__":
     num_epochs = 30
     num_epochs_finetune = 10
     fc_layers_intra =[0]
-    fc_layers_out = [int(hidden_size/4)]
+    fc_layers_out = [int(hidden_size/8)]
 
     # Print configuration
     print(f"1D LSTM")
