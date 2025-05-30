@@ -24,6 +24,7 @@ class FullyConnectedNN(nn.Module):
             # Define activation function (e.g., ReLU)
             #layers.append(nn.LayerNorm(hidden_size))
             layers.append(nn.ReLU())
+            layers.append(nn.Dropout(0.1))
 
 
         else:
@@ -303,7 +304,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     # Create data loaders
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=False
+        shuffle=True, drop_last=False
     )
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, 
@@ -491,7 +492,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 100000
+    num_shots = 10000
 
     # Determine system size based on distance
     if distance == 3:
@@ -517,18 +518,18 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 128
+    hidden_size = 256
     output_size = 1
     chain_length = num_ancilla_qubits
-    batch_size = 256
+    batch_size = 128
     test_size = 0.2
-    learning_rate = 0.002
+    learning_rate = 0.003
     learning_rate_fine = 0.0002
-    patience = 3
-    num_epochs = 30
+    patience = 4
+    num_epochs = 20
     num_epochs_finetune = 10
     fc_layers_intra =[0]
-    fc_layers_out = [int(hidden_size/8)]
+    fc_layers_out = [int(hidden_size/4)]
 
     # Print configuration
     print(f"1D LSTM")
