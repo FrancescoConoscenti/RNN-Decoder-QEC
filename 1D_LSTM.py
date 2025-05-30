@@ -490,8 +490,8 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 17
-    num_shots = 700000
+    rounds = 5
+    num_shots = 100000
 
     # Determine system size based on distance
     if distance == 3:
@@ -542,6 +542,8 @@ if __name__ == "__main__":
 
     train_loader_exp, test_loader_exp, X_train_exp, X_test_exp, y_train_exp, y_test_exp = create_data_loaders(
     detection_array_ordered_exp, observable_flips_exp, batch_size, test_size)
+
+    print(detection_array_ordered.shape)
 
     # Create model
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
