@@ -518,7 +518,7 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 256
+    hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
     batch_size = 128
@@ -567,9 +567,9 @@ if __name__ == "__main__":
 
     #Finetune
     optimizer = optim.Adam(model.parameters(), lr=learning_rate_fine)
-    model, losses = train_model(model, train_loader_exp, criterion, optimizer, num_epochs_finetune, rounds, scheduler)
+    #model, losses = train_model(model, train_loader_exp, criterion, optimizer, num_epochs_finetune, rounds, scheduler)
     
-    accuracy, predictions = evaluate_model(model, test_loader_exp, rounds)
+    #accuracy, predictions = evaluate_model(model, test_loader_exp, rounds)
 
     # Print execution time
     print(f"Execution time: {end_time - start_time:.6f} seconds")
