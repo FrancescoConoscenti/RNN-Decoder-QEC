@@ -524,7 +524,7 @@ if __name__ == "__main__":
     batch_size = 128
     test_size = 0.2
     learning_rate = 0.003
-    learning_rate_fine = 0.0002
+    learning_rate_fine = 0.002
     patience = 4
     num_epochs = 20
     num_epochs_finetune = 10
