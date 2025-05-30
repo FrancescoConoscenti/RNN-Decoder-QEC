@@ -490,7 +490,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 1000000
+    num_shots = 1000
 
     # Determine system size based on distance
     if distance == 3:
@@ -516,7 +516,7 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 256
+    hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
     batch_size = 256
@@ -524,10 +524,10 @@ if __name__ == "__main__":
     learning_rate = 0.003
     learning_rate_fine = 0.0003
     patience = 3
-    num_epochs = 30
-    num_epochs_finetune = 15
+    num_epochs = 3
+    num_epochs_finetune = 1
     fc_layers_intra =[0]
-    fc_layers_out = [int(hidden_size/8)]
+    fc_layers_out = [int(hidden_size/4)]
 
     # Print configuration
     print(f"1D LSTM")
