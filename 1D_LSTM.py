@@ -492,7 +492,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 10000
+    num_shots = 20000
 
     # Determine system size based on distance
     if distance == 3:
@@ -518,13 +518,13 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 128
+    hidden_size = 256
     output_size = 1
     chain_length = num_ancilla_qubits
-    batch_size = 128
+    batch_size = 64
     test_size = 0.2
-    learning_rate = 0.003
-    learning_rate_fine = 0.002
+    learning_rate = 0.01
+    learning_rate_fine = 0.01
     patience = 4
     num_epochs = 20
     num_epochs_finetune = 10
