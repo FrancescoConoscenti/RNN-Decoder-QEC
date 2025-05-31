@@ -518,18 +518,18 @@ if __name__ == "__main__":
 
     # Model hyperparameters
     input_size = 1
-    hidden_size = 256
+    hidden_size = 128
     output_size = 1
     chain_length = num_ancilla_qubits
-    batch_size = 64
+    batch_size = 256
     test_size = 0.2
     learning_rate = 0.01
     learning_rate_fine = 0.01
     patience = 4
     num_epochs = 20
     num_epochs_finetune = 10
-    fc_layers_intra =[0]
-    fc_layers_out = [int(hidden_size/4)]
+    fc_layers_intra =[ int(hidden_size/4)]
+    fc_layers_out = [int(hidden_size/2)]
 
     # Print configuration
     print(f"1D LSTM")
