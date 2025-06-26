@@ -183,6 +183,10 @@ class LatticeRNN(nn.Module):
         
         # Get final hidden state from bottom-right corner
         final_h, final_c = chain_states[-1]
+
+        #skip connection to combine external hidden states
+        final_h = final_h + h_ext   
+        final_c = final_c + c_ext
         
         final = torch.cat((final_h, final_c), dim=1)
         
@@ -473,7 +477,7 @@ if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
-    rounds = 5
+    rounds = 11
     num_shots = 30000
     FineTune = False
 
