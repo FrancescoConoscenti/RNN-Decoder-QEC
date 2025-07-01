@@ -471,14 +471,12 @@ def load_data_exp():
 
 
 
-
-
 if __name__ == "__main__":
         
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 100000
+    num_shots = 50000
     FineTune = False
 
     # Determine system size based on distance
