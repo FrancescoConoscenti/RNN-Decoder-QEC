@@ -123,6 +123,7 @@ class LatticeRNN(nn.Module):
         self.batch_size = batch_size
         self.grid_height = grid_height
         self.grid_width = grid_width
+        self.bn =  nn.BatchNorm1d(output_size)
         
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
@@ -132,7 +133,7 @@ class LatticeRNN(nn.Module):
         
         # Output layer
         #self.fc_out = nn.Linear(hidden_size, output_size)
-        self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size)
+        self.fc_out = FullyConnectedNN(hidden_size * 2, fc_layers_out, output_size)
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, x, h_ext, c_ext, grid_states):
@@ -204,6 +205,7 @@ class LatticeRNN(nn.Module):
         output = self.fc_out(final)
         output = self.bn(output)
         output = self.sigmoid(output)
+        
         
         return output, final_h, final_c, grid_states
 
@@ -363,7 +365,7 @@ def train_model(model, train_loader, criterion, optimizer, scheduler, num_epochs
         scheduler.step(running_loss)
         avg_loss = running_loss / len(train_loader)
         losses.append(avg_loss)
-        current_lr = scheduler.get_last_lr()[0]
+        current_lr = optimizer.param_groups[0]['lr']
 
         print(f"Epoch [{epoch+1}/{num_epochs}], lr: {current_lr} , Loss: {avg_loss:.4f}")
     
@@ -444,7 +446,7 @@ def load_data(num_shots):
 # Configuration parameters
 distance = 3
 rounds = 11
-num_shots = 30000
+num_shots = 2000
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
