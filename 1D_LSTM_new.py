@@ -192,8 +192,8 @@ class LatticeRNN(nn.Module):
         
         # Generate output
         output = self.fc_out(final)
-        output = self.bn(output)
-        output = self.sigmoid(output)
+        #output = self.bn(output)
+        #output = self.sigmoid(output)
         
         return output, final_h, final_c, chain_states
 
@@ -273,7 +273,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(
         detection_array, observable_flips, 
-        test_size=test_size, shuffle=False
+        test_size=test_size, shuffle=True
     )
      
     if isinstance(detection_array ,  (np.ndarray, list)):
@@ -292,7 +292,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     # Create data loaders
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=False
+        shuffle=True, drop_last=False
     )
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, 
@@ -338,6 +338,7 @@ def train_model(model, train_loader, criterion, optimizer, num_epochs, num_round
             
             # Backward pass and optimize
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             running_loss += loss.item()
         
@@ -562,7 +563,7 @@ if __name__ == "__main__":
     model = BlockRNN(input_size, hidden_size, output_size, chain_length, fc_layers_intra, fc_layers_out, batch_size)
 
     # Define loss function and optimizer
-    criterion = nn.BCELoss()
+    criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(
         optimizer, mode='min', factor=0.5, patience=patience, verbose=True)
@@ -588,3 +589,4 @@ if __name__ == "__main__":
     # Save model
     #torch.save(model.state_dict(), "2D_LSTM_r11.pth")
     #print(f"Model saved to 2D_LSTM_r11.pth")
+    print("Label distribution:", np.bincount(np.array(observable_flips)))
