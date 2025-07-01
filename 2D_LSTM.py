@@ -447,7 +447,7 @@ def load_data(num_shots):
 # Configuration parameters
 distance = 3
 rounds = 11
-num_shots = 50000
+num_shots = 100000
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
