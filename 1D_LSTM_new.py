@@ -539,7 +539,7 @@ if __name__ == "__main__":
     test_size = 0.2
     learning_rate = 0.002
     patience = 2
-    num_epochs = 20
+    num_epochs = 30
     num_epochs_finetune = 1
     fc_layers_intra =[0]
     fc_layers_out = [int(hidden_size/8)]
