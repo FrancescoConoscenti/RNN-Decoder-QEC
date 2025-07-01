@@ -476,7 +476,7 @@ if __name__ == "__main__":
     # Configuration parameters
     distance = 3
     rounds = 11
-    num_shots = 50000
+    num_shots = 200000
     FineTune = False
 
     # Determine system size based on distance
@@ -538,7 +538,7 @@ if __name__ == "__main__":
     test_size = 0.2
     learning_rate = 0.002
     patience = 2
-    num_epochs = 60
+    num_epochs = 20
     num_epochs_finetune = 1
     fc_layers_intra =[0]
     fc_layers_out = [int(hidden_size/8)]
