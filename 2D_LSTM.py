@@ -200,7 +200,7 @@ class LatticeRNN(nn.Module):
         final_c = final_c + c_ext
         
         final = torch.cat((final_h, final_c), dim=1)
-        
+
         # Generate output
         output = self.fc_out(final)
         output = self.bn(output)
@@ -446,7 +446,7 @@ def load_data(num_shots):
 # Configuration parameters
 distance = 3
 rounds = 11
-num_shots = 2000
+num_shots = 30000
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

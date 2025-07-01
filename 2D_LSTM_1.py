@@ -108,7 +108,9 @@ class LatticeRNN(nn.Module):
         self.batch_size = batch_size
         self.grid_height = grid_height
         self.grid_width = grid_width
-        
+        self.bn =  nn.BatchNorm1d(output_size)# Batch normalization for output
+        self.sigmoid = nn.Sigmoid()  # Sigmoid activation for output
+
         # Create a grid of RNN cells
         self.cells = nn.ModuleList([
             LatticeRNNCell(input_size, hidden_size, batch_size, dropout_rate) 
@@ -117,7 +119,7 @@ class LatticeRNN(nn.Module):
         
         # Output layer with improved architecture
         if fc_layers_out and fc_layers_out[0] > 0:
-            self.fc_out = FullyConnectedNN(hidden_size, fc_layers_out, output_size, dropout_rate)
+            self.fc_out = FullyConnectedNN(hidden_size*2, fc_layers_out, output_size, dropout_rate)
         else:
             self.fc_out = nn.Linear(hidden_size, output_size)
         
