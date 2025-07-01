@@ -162,9 +162,16 @@ class LatticeRNN(nn.Module):
         
         # Get final hidden state from bottom-right corner
         final_h, final_c = grid_states[-1][-1]
+
+        final_h = final_h + h_ext   
+        final_c = final_c + c_ext
         
-        # Generate output (no sigmoid here)
-        output = self.fc_out(final_h)
+        final = torch.cat((final_h, final_c), dim=1)
+        
+        # Generate output
+        output = self.fc_out(final)
+        output = self.bn(output)
+        output = self.sigmoid(output)
         
         return output, final_h, final_c, grid_states
 
@@ -391,7 +398,7 @@ def main():
     # Your existing configuration
     distance = 3
     rounds = 11
-    num_shots = 10000
+    num_shots = 30000
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
@@ -406,13 +413,13 @@ def main():
     
     # Model hyperparameters - adjusted
     input_size = 1
-    hidden_size = 64  # Reduced size
+    hidden_size = 128  # Reduced size
     output_size = 1
     grid_height = 4
     grid_width = 2
-    batch_size = 128  # Reduced batch size
+    batch_size = 256  # Reduced batch size
     test_size = 0.2
-    learning_rate = 0.0001  # Increased learning rate
+    learning_rate = 0.001  # Increased learning rate
     num_epochs = 20
     fc_layers_out = [hidden_size//2]  # Smaller output layers
     dropout_rate = 0.2

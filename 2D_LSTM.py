@@ -193,9 +193,16 @@ class LatticeRNN(nn.Module):
         
         # Get final hidden state from bottom-right corner
         final_h, final_c = grid_states[-1][-1]
+
+        # skip connection
+        final_h = final_h + h_ext   
+        final_c = final_c + c_ext
+        
+        final = torch.cat((final_h, final_c), dim=1)
         
         # Generate output
-        output = self.fc_out(final_h)
+        output = self.fc_out(final)
+        output = self.bn(output)
         output = self.sigmoid(output)
         
         return output, final_h, final_c, grid_states
@@ -437,7 +444,7 @@ def load_data(num_shots):
 # Configuration parameters
 distance = 3
 rounds = 11
-num_shots = 100000
+num_shots = 30000
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -479,16 +486,16 @@ observable_flips = observable_flips.astype(int).flatten().tolist()
 
 # Model hyperparameters
 input_size = 1
-hidden_size = 32
+hidden_size = 128
 output_size = 1
 grid_height = 4
 grid_width = 2
-batch_size = 128
+batch_size = 256
 test_size = 0.2
-learning_rate = 0.0001
+learning_rate = 0.001
 num_epochs = 20
 fc_layers_intra = [0] #not used
-fc_layers_out = [hidden_size]
+fc_layers_out = [hidden_size//2]
 
 # Print configuration
 print(f"2D LSTM")
