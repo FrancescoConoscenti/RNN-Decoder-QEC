@@ -203,7 +203,7 @@ class LatticeRNN(nn.Module):
 
         # Generate output
         output = self.fc_out(final)
-        output = self.bn(output)
+        #output = self.bn(output)
         output = self.sigmoid(output)
         
         
@@ -294,7 +294,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     # Split data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(
         detection_array, observable_flips, 
-        test_size=test_size, shuffle=False
+        test_size=test_size, shuffle=True
     )
     
     # Convert to PyTorch tensors
@@ -310,7 +310,7 @@ def create_data_loaders(detection_array, observable_flips, batch_size, test_size
     # Create data loaders
     train_loader = DataLoader(
         train_dataset, batch_size=batch_size, 
-        shuffle=False, drop_last=True
+        shuffle=True, drop_last=True
     )
     test_loader = DataLoader(
         test_dataset, batch_size=batch_size, 
@@ -357,6 +357,7 @@ def train_model(model, train_loader, criterion, optimizer, scheduler, num_epochs
             
             # Backward pass and optimize
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
             optimizer.step()
             
             running_loss += loss.item()
