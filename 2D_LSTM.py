@@ -447,7 +447,7 @@ def load_data(num_shots):
 # Configuration parameters
 distance = 3
 rounds = 11
-num_shots = 200000
+num_shots = 2000
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -519,7 +519,7 @@ model = BlockRNN(input_size, hidden_size, output_size, grid_height,
                  grid_width, fc_layers_intra, fc_layers_out, batch_size).to(device)
 
 # Define loss function and optimizer
-criterion = nn.BCELoss()
+criterion = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=2)
 
