@@ -501,7 +501,7 @@ fc_layers_intra = [0] #not used
 fc_layers_out = [hidden_size//2]
 
 # Print configuration
-print(f"2D LSTM")
+print(f"2D LSTM ")
 print(f"Configuration: rounds={rounds}, distance={distance}, num_shots={num_shots}")
 print(f"Model parameters: hidden_size={hidden_size}, batch_size={batch_size}")
 print(f"Training parameters: learning_rate={learning_rate}, num_epochs={num_epochs}")
