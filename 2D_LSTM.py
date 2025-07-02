@@ -447,7 +447,7 @@ def load_data(num_shots):
 # Configuration parameters
 distance = 3
 rounds = 11
-num_shots = 100000
+num_shots = 200000
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -496,7 +496,7 @@ grid_width = 2
 batch_size = 256
 test_size = 0.2
 learning_rate = 0.001
-num_epochs = 60
+num_epochs = 30
 fc_layers_intra = [0] #not used
 fc_layers_out = [hidden_size//2]
 
